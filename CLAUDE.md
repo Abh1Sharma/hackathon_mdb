@@ -90,10 +90,10 @@ Paste this to start the session at 10:45:
 | Policy | `gateway/policies.py`, seed policies in `cli/seed.py` | six operators, deny > step-up > allow, default deny. P-009 is the precedent rule: rerank score at least 0.70 and a 0.10 margin over the closest approved precedent |
 | Ledger | `gateway/ledger.py` | hash-chained per run, `verify` names the first broken entry |
 | Search | `gateway/precedents.py` | one aggregation: `$rankFusion` of `$vectorSearch` (autoEmbed, voyage-4) and `$search`, then `$rerank` (rerank-2.5). About 330 ms |
-| Control | `gateway/control.py`, `gateway/killswitch.py` | kill, approvals (web or voice with a challenge code), rollback, reconstruct. A human decision becomes a precedent |
+| Control | `gateway/control.py`, `gateway/killswitch.py` | kill, approvals (web or voice with a challenge code), rollback, reconstruct. A human decision becomes a precedent. `flag` lets a human rule on a call that was already allowed (a `ruling` ledger entry plus a precedent). `set_threshold` changes P-009's `min_score`, human only, versioned on the policy |
 | API and console | `control/api.py`, `console/index.html` | FastAPI plus one HTML page. Change streams feed it over SSE. Keys 1 to 3 walk the demo, 4 undoes the first payment. `GET /atlas` feeds the folded "Inside MongoDB Atlas" section |
 | Agents | `agent/scripted.py`, `agent/live.py` | scripted is the stage default. Live is Claude Opus 5.5 on LangGraph with the MongoDB checkpointer, verified |
-| Voice | `voice/agent.md` | ElevenLabs agent "Warrant Approvals Desk". Its id is in `.env` as `ELEVENLABS_AGENT_ID`, never in the repo. Verified in typed mode only |
+| Voice | `voice/agent.md` | ElevenLabs agent "Warrant Approvals Desk". Its id is in `.env` as `ELEVENLABS_AGENT_ID`, never in the repo. Three client tools: `submit_decision`, `flag_request`, `set_threshold`. Verified in typed mode only |
 | Red team | `evals/`, `checks/hidden.py`, `./warrant scoreboard` | 12 attacks and 8 legitimate tasks, three arms: 12/12, 1/12, 0/12 executed. Receipt in `docs/evidence/scoreboard.json` |
 | Tests | `tests/` | 44 acceptance tests against the cluster, in database `warrant_test`. IDs match the spec (AT-01 to AT-17) |
 
@@ -104,27 +104,28 @@ The demo server is started with `./warrant demo --scripted --port 8000` (it rese
 
 ### The demo (see `docs/05-DEMO.md`)
 
-The story has one human on screen: Sam, who runs payments at a freight company. An AI support agent handles refund requests for him, and a customer asks for a refund. The problem in plain words: the agent obeys every written rule and still pays requests nobody wrote a rule for, and afterwards nobody can say who allowed it. Warrant is the checkpoint between the agent and the money.
+The story has one human on screen: Sam, who runs payments at a freight company. An AI support agent handles refund requests for him. The problem in plain words: the agent obeys every written rule and still pays requests nobody wrote a rule for, and afterwards nobody can say who allowed it. Warrant is the checkpoint between the agent and the money.
 
-The console is light-themed and story-first. It opens with a preamble, "Meet Sam", and three cards (The problem, The checkpoint, The payoff). Then three steps:
+The console (`console/index.html`, one file, no build step) has four tabs: Demo, MongoDB live, Proof, Audit trail. Demo opens with "Meet Sam", a start button and three floating cards (The problem, The checkpoint, The payoff). Above the stage is a flow strip: Customer, AI agent, Warrant checkpoint, Payment.
 
 | Key | Step | What happens |
 |---|---|---|
 | 1 | A request no rule covers | A customer asks for $300 back, sent to someone else's card (T8). It is under every limit, so the agent pays it |
-| 2 | Sam is asked once | A $900 request of the same kind (T7) is over the agent's $500 limit, so the checkpoint asks Sam. He denies it by voice with a reason and reads the three-digit code on screen. Fallback: type the reason and click Deny |
-| 3 | It never happens again | The same $300 request returns and is held, citing Sam's ruling and his words. No rule was edited |
+| 2 | Sam speaks up | Sam calls Warrant. The ElevenLabs agent comes up and says "Warrant here. Go ahead, Sam." He states the rule. The agent calls `flag_request`, which writes a refusal precedent for that request, then asks whether he wants a different similarity threshold. A number calls `set_threshold`, which updates `params.min_score` on policy P-009. The stage has three columns here: the request, Sam and Warrant, and "MongoDB Atlas, live" with the inserted document and the policy diff. Fallbacks: type the rule and press Flag it, "Type to Warrant", and a slider for the threshold |
+| 3 | It never happens again | The same $300 request returns and is held, citing Sam's ruling (score about 0.97) |
 | 4 (optional) | Undo the first payment | Rollback of the first run. The refund is reversed and the email is marked cannot undo |
+| 5 (optional) | Warrant asks Sam | The other direction: a $900 request (T7) is over the agent's limit, so the checkpoint asks Sam. Voice approval with the three-digit code, or type a reason and click Deny |
 
-Under the stage: a strip "What MongoDB Atlas is doing", and three collapsible sections: "Red team" (12, 1, 0 and the model-alone line), "Inside MongoDB Atlas" (live collection counts, what the database enforces on each collection, the real search pipeline and the ledger validator) and "Audit trail" (the ledger, kill, roll back, verify, the full support queue).
-
-Look (3:10 PM, at Abhi's request, modelled on the Magic UI agent template he shared): Geist and Geist Mono from Google Fonts with a system fallback, one blue accent, a hero with a blue glow, three floating context cards with small animated chips, and a "Start with a customer request" button that runs step 1. It is still one plain HTML file with no build step. He asked about moving to Next.js and Tailwind: not today.
-
-The 60-second script is also the 1-minute video. Abhi believes the live slot may be only 1 minute. In order: introduce Sam and press 1 ("It broke no rule, so it was paid. A person would have said no."). Press 2 and deny by voice ("Deny. Refunds only go back to the original payment method. The code is" and the three digits). Say the ruling is now in Atlas and that Atlas embedded it itself. Press 3 ("Stopped. It cites what I said twenty seconds ago. No rule edited, no retraining."). Close on the red-team numbers: 12, 1, 0. With 3 minutes, add the undo, the full queue from Audit trail, Kill, `./warrant replay` and the model-alone result.
-
+- Abhi asked for this flow at about 3:45 PM: Sam interjects by voice while watching requests, Warrant confirms and asks about the threshold, and the Atlas changes show as they happen.
+- Step 2 uses the same ElevenLabs agent with a per-call prompt and first message passed from the page (`talkPrompt` in the console). Client overrides for prompt and first message are enabled on the agent. Verified in typed mode only, not yet with a microphone. `?autovoice=0` stops key 2 from starting the microphone.
+- "No rule was edited" is only true when the threshold was not changed, and the page words it accordingly. If Sam changed the threshold, say "nothing was retrained and no rule was rewritten".
+- The threshold is on the `$rerank` score (0 to 1), default 0.70, with a 0.10 margin over the closest approved precedent. The repeat of the flagged request scores about 0.97. On the key 5 path the $300 request scores 0.76 against a ruling made on the $900 request, so a threshold above 75 would let it through there.
+- MongoDB live shows the tiles, the latest write, the P-009 diff, collection counts and what the database enforces, the search pipeline and the ledger validator. Proof shows the red-team numbers, the model-alone line and the test receipt (`WARRANT_RECEIPT=1 uv run --env-file .env pytest` writes `docs/evidence/tests.json`).
 - Sam is the only human named on screen. The data still has `human:dana` as the person the agent acts for and as the reviewer for kill and rollback, and `human:sam` as the approver.
 - The scripted demo steps skip the order lookup to keep waits short.
 - Lead with the learning loop. Per-call policy, chained logs and kill switches are table stakes (Microsoft's Agent Governance Toolkit has them): do not lead with those.
-- Older notes in this file that mention keys 1 to 5, a five-step flow or a microphone button after key 2 describe the previous console.
+- Abhi decides what ships and when (he said so at about 3:45 PM). Do not hold work back for the clock. Commit working checkpoints so he can stop at any of them.
+- Wanted after his first test pass, not before: brand it as something that plugs into a company's CRM or support desk, with a placeholder "connect my environment" button.
 
 ### Rules learned today
 
@@ -159,7 +160,7 @@ The 60-second script is also the 1-minute video. Abhi believes the live slot may
 
 ### Open items
 
-- Abhi tests voice himself: Chrome at http://127.0.0.1:8000, key 2, wait for the $900 card, press the microphone button, allow the microphone, say the decision and a reason, read the amber code.
+- Abhi tests voice himself: Chrome at http://127.0.0.1:8000, key 1, then key 2, allow the microphone, say the rule, answer the threshold question, then key 3.
 - Timed rehearsals (target under 2:50), the 1-minute video (start by 3:45 PM), the submission form (by 4:45 PM). Feature freeze at 3:10 PM.
 - If the scenario is re-skinned: company and customer names can change freely. Ticket notes, agent reasons and precedent text are what search compares, so changing any of them changes scores. Re-run `./warrant scoreboard` and the tests afterwards.
 - Not built: crash reconciler, precedent review and expiry, MCP front door, insert-only ledger user.

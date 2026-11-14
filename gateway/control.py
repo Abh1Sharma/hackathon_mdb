@@ -4,9 +4,11 @@ These are the reviewer's and approver's actions. Each one is recorded in the
 same ledger as the agent's actions, in the same transaction as its effect.
 """
 
-from gateway import ledger
+from pymongo import ReturnDocument
+
+from gateway import ledger, precedents
 from gateway.canonical import digest, now
-from gateway.gateway import WARRANT_TTL
+from gateway.gateway import WARRANT_TTL, resolve
 from systems import tools
 
 
@@ -95,6 +97,69 @@ def decide_approval(db, approval_id: str, approver: str, decision: str, channel:
             "summary": request["summary"], "decision": decision, "decided_by": approver, "channel": channel,
             "outcome_note": note, "approval_id": approval_id, "seeded": False, "created_at": now()})
     return out
+
+
+def _may_rule(db, who: str) -> bool:
+    human = db.identities.find_one({"_id": who, "kind": "human", "status": "active"})
+    return bool(human and "approve.refund" in human.get("scopes", []))
+
+
+def flag(db, run_id: str, step: int, by: str, note: str, channel: str = "web", evidence: dict | None = None) -> dict:
+    """A human rules on a call the checkpoint already allowed: requests like this should come to me.
+
+    Their words become a refusal precedent, so the next similar request is held. The ruling is recorded
+    in the run's ledger. Nothing is undone here. That is what rollback is for.
+    """
+    note = (note or "").strip()
+    if not _may_rule(db, by):
+        return {"ok": False, "error": f"{by} is not allowed to rule on this"}
+    if not note:
+        return {"ok": False, "error": "a ruling needs a reason"}
+    decision = db.ledger.find_one({"run_id": run_id, "step": step, "type": "decision"})
+    if not decision:
+        return {"ok": False, "error": "no such decision"}
+    args, reason = decision["payload"]["args"], decision.get("reason", "")
+    resource, customer_note = resolve(db, decision["tool"], args)
+    ruling = {
+        "_id": f"PR-{run_id.split('_')[-1]}-{step}", "tool": decision["tool"], "amount_cents": args.get("amount_cents"),
+        "region": resource.get("region"), "reason": reason, "note": customer_note,
+        "summary": precedents.summary(decision["tool"], args.get("amount_cents"), resource.get("region"), reason,
+                                      customer_note),
+        "decision": "denied", "decided_by": by, "channel": channel, "outcome_note": note,
+        "run_id": run_id, "step": step, "seeded": False, "created_at": now()}
+    ledger.append_tx(db, run_id, {
+        "type": "ruling", "actor": by, "on_behalf_of": decision.get("on_behalf_of"), "step": step,
+        "tool": decision["tool"], "reason": note,
+        "payload": {"precedent_id": ruling["_id"], "channel": channel, "evidence": evidence or {}}})
+    db.precedents.replace_one({"_id": ruling["_id"]}, ruling, upsert=True)
+    return {"ok": True, "precedent_id": ruling["_id"], "summary": ruling["summary"]}
+
+
+def set_threshold(db, by: str, min_score: float, channel: str = "web", policy_id: str = "P-009") -> dict:
+    """A human sets how closely a request must match a refused precedent before it is held.
+
+    The threshold is a parameter of the policy document, so the next decision uses it. Each change bumps
+    the policy version, which every later decision cites, and is kept in the policy's history.
+    """
+    if not _may_rule(db, by):
+        return {"ok": False, "error": f"{by} is not allowed to change this rule"}
+    if not 0.5 <= min_score <= 0.95:
+        return {"ok": False, "error": "the threshold must be between 50 and 95 percent"}
+    policy = db.policies.find_one({"_id": policy_id, "status": "active"})
+    if not policy or "min_score" not in policy.get("params", {}):
+        return {"ok": False, "error": "that rule has no similarity threshold"}
+    was, new = policy["params"]["min_score"], round(float(min_score), 2)
+    if new == was:
+        return {"ok": True, "policy_id": policy_id, "was": was, "min_score": new, "version": policy["version"],
+                "changed": False}
+    after = db.policies.find_one_and_update({"_id": policy_id, "version": policy["version"]}, {
+        "$set": {"params.min_score": new}, "$inc": {"version": 1},
+        "$push": {"history": {"version": policy["version"] + 1, "min_score": new, "was": was, "by": by,
+                              "channel": channel, "at": now()}}}, return_document=ReturnDocument.AFTER)
+    if not after:
+        return {"ok": False, "error": "the rule changed at the same moment, try again"}
+    return {"ok": True, "policy_id": policy_id, "was": was, "min_score": new, "version": after["version"],
+            "changed": True}
 
 
 def rollback(db, run_id: str, by: str) -> dict:

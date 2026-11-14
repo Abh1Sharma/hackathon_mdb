@@ -17,34 +17,41 @@ Who is who: Sam runs payments at a freight company and is the only human in the 
 - Open http://127.0.0.1:8000 in Chrome, in a wide window. Voice needs the microphone, so allow it when Chrome asks.
 - Wear the headset for the voice step.
 - Click an empty area of the page before using the keys, so they are not typed into a text box.
-- Press **Reset** between runs. It waits until Atlas has dropped the last session's rulings from the search index, so step 1 is paid again.
+- Press **Reset** between runs. It waits until Atlas has dropped the last session's rulings from the search index, and it restores the threshold, so step 1 is paid again.
 
-The page opens with a short preamble, "Meet Sam", and three cards: The problem, The checkpoint, The payoff. The demo is keys **1**, **2** and **3**. Key **4** is an optional undo.
+The page has four tabs: **Demo**, **MongoDB live**, **Proof** and **Audit trail**. Demo opens with "Meet Sam" and three cards: The problem, The checkpoint, The payoff. The demo is keys **1**, **2** and **3**. Key **4** undoes the first payment. Key **5** is the other direction, where Warrant asks Sam.
 
 ## The 60-second script
 
 | Time | Say | Do |
 |---|---|---|
-| 0:00 | "This is Sam. An AI agent handles refunds for him. Watch what it does with this one." | Press **1**. Step 1, "A request no rule covers" |
-| 0:06 | "Three hundred dollars, to someone else's card. It broke no rule, so it was paid. A person would have said no." | The customer's message appears, then the $300 refund is allowed and paid |
-| 0:15 | "A bigger one of the same kind is over the agent's limit, so the checkpoint asks Sam." | Press **2**. Step 2, "Sam is asked once". The $900 request appears in Sam's review inbox |
-| 0:22 | Listen to the one-sentence briefing. Then say: "Deny. Refunds only go back to the original payment method. The code is" and the three digits on screen | Click **Decide by voice** on the review card. Fallback: type the reason and click **Deny** |
-| 0:38 | "That ruling is now in MongoDB Atlas. Atlas embedded it itself." | Wait until the page shows the ruling is saved and indexed |
-| 0:42 | "The same three hundred dollar request again." | Press **3**. Step 3, "It never happens again" |
-| 0:47 | "Stopped. It cites what I said twenty seconds ago. No rule edited, no retraining. One Atlas aggregation: vector and text search fused, then reranked." | The request is held, with Sam's ruling and his words on the card |
-| 0:56 | "Twelve attacks: twelve get through with no gate, one with Warrant, zero after that one ruling." | Scroll to the **Red team** line under the stage: 12, 1, 0 |
+| 0:00 | "This is Sam. An AI agent handles refunds for him. Watch this one." | Press **1**. Step 1, "A request no rule covers" |
+| 0:06 | "Three hundred dollars, to someone else's card. It broke no rule, so it was paid. A person would have said no." | The request is allowed and paid |
+| 0:14 | "Sam is watching, and he speaks up." | Press **2**. Step 2, "Sam speaks up". Warrant says "Warrant here. Go ahead, Sam." |
+| 0:18 | To Warrant: "Hey Warrant, Sam here. Flag this one. Refunds only go back to the original payment method." | The ruling appears in the Atlas column as a new document |
+| 0:28 | Warrant confirms and asks about the threshold. Answer: "Make it eighty percent." | The policy diff appears: 0.7 becomes 0.8, version 2 |
+| 0:40 | "Two writes to MongoDB Atlas. His ruling, which Atlas embedded itself, and one number on the rule." | Point at the "MongoDB Atlas, live" column |
+| 0:46 | "The same request again." | Press **3**. Step 3, "It never happens again" |
+| 0:50 | "Stopped. It cites what Sam said twenty seconds ago. Nothing was retrained." | The request is held, with Sam's words on the card |
+| 0:56 | "Twelve attacks: twelve get through with no gate, one with Warrant, zero after one ruling." | Open the **Proof** tab |
 
-Fallback for the voice step: type the reason and click **Deny**. Every step is also a button. The voice step is the part most likely to run long, so if it does in rehearsal, use the typed reason. If the network dies, play the video and narrate.
+The voice exchange in step 2 is the long part, about 25 seconds. To save about 10 seconds, answer the threshold question with "No, keep it".
+
+Fallbacks for step 2: type the rule and press **Flag it**, or use **Type to Warrant** for the same conversation in text. The threshold also has a slider in the Atlas column. If the network dies, play the video and narrate.
+
+Do not say "no rule was edited" after changing the threshold. Say "nothing was retrained and no rule was rewritten".
 
 ## If you have 3 minutes
 
 Run the 60-second script first, then add these in order:
 
 - **Undo.** Press **4**, "Undo the first payment". The $300 refund from step 1 is reversed. The email is marked "cannot undo", because it was already sent.
+- **Warrant asks Sam.** Press **5**. A $900 request is over the agent's limit, so the checkpoint asks Sam. He decides by voice and reads the three-digit code, or types a reason and clicks **Deny**.
+- **MongoDB live.** Open the tab: the collections, what the database enforces on each, the search pipeline and the ledger's validator.
 - **The full support queue.** Open **Audit trail** and run the full queue. It shows an allowed refund, a refusal because the order is outside the agent's region, and an injected $5,000 transfer that is refused.
-- **Kill.** In **Audit trail**, press **Kill** while a run is going. The agent's next call is refused and recorded.
+- **Kill.** In **Audit trail**, press **Kill run** while a run is going. The agent's next call is refused and recorded.
 - **Replay.** In a terminal, run `./warrant replay`. It prints who acted, on whose behalf, what, why, which rule, and whether the effect was verified.
-- **The numbers.** Open **Red team** and give the model-alone result: Claude Opus 5.5, with the rules in its prompt and no gate, broke a written rule in 0 of 15 runs and still paid out in 6 of 9 runs where no rule was written.
+- **The numbers.** Open **Proof** and give the model-alone result: Claude Opus 5.5, with the rules in its prompt and no gate, broke a written rule in 0 of 15 runs and still paid out in 6 of 9 runs where no rule was written.
 - **What was hard.** "The decision, the warrant and the ledger entry commit in one transaction, and a warrant is bound to the exact arguments, so a replayed or altered call is refused."
 
 For the finals, open with the buyer: "If your agents move money or touch customer records, this is the layer your risk team asks for." You can also open with your own story from this morning: an AI support agent refunded you in two minutes with no human involved.

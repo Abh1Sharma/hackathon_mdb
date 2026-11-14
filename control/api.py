@@ -24,7 +24,7 @@ from gateway.db import get_db
 
 app = FastAPI(title="Warrant control API")
 CONSOLE = Path(__file__).resolve().parent.parent / "console" / "index.html"
-WATCHED = ["ledger", "runs", "approvals"]
+WATCHED = ["ledger", "runs", "approvals", "policies"]
 _subscribers: set[queue.Queue] = set()
 _feed_started = False
 
@@ -84,6 +84,20 @@ class Kill(BaseModel):
 
 class Rollback(BaseModel):
     by: str = "human:dana"
+
+
+class Flag(BaseModel):
+    step: int
+    by: str = "human:sam"
+    note: str
+    channel: str = "web"
+    evidence: dict | None = None
+
+
+class Threshold(BaseModel):
+    by: str = "human:sam"
+    percent: float
+    channel: str = "web"
 
 
 class Decision(BaseModel):
@@ -170,6 +184,7 @@ def list_approvals(status: str = "pending"):
 def list_policies():
     """The written rules, as stored in Atlas. `uses_precedents` marks the rule that searches past decisions."""
     return out([{"_id": p["_id"], "effect": p["effect"], "description": p["description"], "version": p["version"],
+                 "params": p.get("params", {}), "history": p.get("history", []),
                  "uses_precedents": any(c["field"].startswith("precedent.") for c in p["when"])}
                 for p in get_db().policies.find({"status": "active"}).sort("_id", 1)])
 
@@ -184,11 +199,32 @@ def decide(approval_id: str, body: Decision):
     return out(result)
 
 
-def _announce_learned(approval_id: str):
-    """Tell the console when Atlas has embedded and indexed the precedent this decision created."""
+@app.post("/runs/{run_id}/flag")
+def flag(run_id: str, body: Flag):
+    """A human rules on a call that was already allowed. Their words become a precedent."""
+    result = control.flag(get_db(), run_id, body.step, body.by, body.note, channel=body.channel,
+                          evidence=body.evidence)
+    if not result["ok"]:
+        raise HTTPException(409, result["error"])
+    threading.Thread(target=_announce_learned, args=(result["precedent_id"],), daemon=True).start()
+    return out(result)
+
+
+@app.post("/policies/{policy_id}/threshold")
+def threshold(policy_id: str, body: Threshold):
+    """A human sets how similar a request must be to a refused one before it is held."""
+    result = control.set_threshold(get_db(), body.by, body.percent / 100, channel=body.channel,
+                                   policy_id=policy_id)
+    if not result["ok"]:
+        raise HTTPException(409, result["error"])
+    return out(result)
+
+
+def _announce_learned(key: str):
+    """Tell the console when Atlas has embedded and indexed the precedent a decision or a flag created."""
     from gateway import precedents
     db = get_db()
-    ruling = db.precedents.find_one({"approval_id": approval_id})
+    ruling = db.precedents.find_one({"$or": [{"approval_id": key}, {"_id": key}]})
     if not ruling:
         return
     seconds = precedents.wait_until_searchable(db, ruling)

@@ -120,3 +120,45 @@ def test_at17_a_human_ruling_tightens_the_next_similar_request(indexed):
     card = indexed.approvals.find_one({"_id": after["approval_id"]})["precedents"][0]
     assert card["outcome_note"] == words and card["seeded"] is False  # the approver sees the human's own words
     assert list(indexed.policies.find().sort("_id", 1)) == policies_before
+
+
+def test_at18_a_human_flag_on_a_paid_request_holds_the_next_one(indexed):
+    """Sam speaks up about a refund that was allowed and paid. The same request is held the next time."""
+    from agent import scripted
+    from gateway import control, ledger
+
+    first = scripted.run_queue(indexed, ["T8"])
+    assert first["outcomes"]["T8"]["ok"] is True
+    decision = [e for e in ledger.entries(indexed, first["run_id"])
+                if e["type"] == "decision" and e.get("tool") == "payments.refund"][0]
+    words = "Refunds only go back to the original payment method."
+    assert control.flag(indexed, first["run_id"], decision["step"], "agent:refund-agent-7", words)["ok"] is False
+    out = control.flag(indexed, first["run_id"], decision["step"], "human:sam", words, channel="voice")
+    assert out["ok"]
+    ruling = indexed.precedents.find_one({"_id": out["precedent_id"]})
+    assert ruling["decision"] == "denied" and ruling["outcome_note"] == words and ruling["seeded"] is False
+    assert precedents.wait_until_searchable(indexed, ruling) is not None
+    assert ledger.entries(indexed, first["run_id"])[-1]["type"] == "ruling"  # the ruling is in the run's chain
+    assert ledger.verify(indexed, first["run_id"])["ok"]
+
+    later = scripted.run_queue(indexed, ["T8"])["outcomes"]["T8"]
+    assert later["code"] == "STEP_UP_PENDING" and later["rule"] == "P-009"
+    assert indexed.sys_payments.count_documents({"type": "refund"}) == 1  # only the first one was paid
+
+
+def test_at19_the_similarity_threshold_is_a_versioned_policy_parameter(indexed):
+    """Only a human can change it, the change is versioned, and the next decision uses it."""
+    from agent import scripted
+    from gateway import control, ledger
+
+    assert control.set_threshold(indexed, "agent:refund-agent-7", 0.8)["ok"] is False
+    assert control.set_threshold(indexed, "human:sam", 0.99)["ok"] is False  # out of range
+    out = control.set_threshold(indexed, "human:sam", 0.8, channel="voice")
+    assert out == {"ok": True, "policy_id": "P-009", "was": 0.7, "min_score": 0.8, "version": 2, "changed": True}
+    policy = indexed.policies.find_one({"_id": "P-009"})
+    assert policy["params"]["min_score"] == 0.8 and policy["history"][-1]["by"] == "human:sam"
+
+    run = scripted.run_queue(indexed, ["T8"])
+    decision = [e for e in ledger.entries(indexed, run["run_id"])
+                if e["type"] == "decision" and e.get("tool") == "payments.refund"][0]
+    assert decision["payload"]["precedent"]["min_score"] == 0.8

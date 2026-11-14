@@ -19,7 +19,7 @@ Sam, the person who approves refunds, says no once, out loud. Atlas stores that 
 
 ![Sam's ruling stops the same $300 request when it is sent again](docs/img/console-learned.jpg)
 
-**The moment:** three steps. First, a customer asks for $300 back, sent to someone else's card. It is under every limit, so the agent pays it. Second, a $900 request of the same kind is over the agent's $500 limit, so the checkpoint asks Sam, and he denies it by voice with a reason. Third, the same $300 request returns and is held, citing Sam's ruling and his words. No rule was edited. One page for judges: [docs/ONE-PAGER.md](docs/ONE-PAGER.md).
+**The moment:** three steps. First, a customer asks for $300 back, sent to someone else's card. It is under every limit, so the agent pays it. Second, Sam, who is watching, tells Warrant out loud that refunds only go back to the original payment method. Warrant writes that ruling to Atlas and asks whether he wants a different similarity threshold. Third, the same $300 request returns and is held, citing Sam's words. Nothing was retrained and no rule was rewritten. One page for judges: [docs/ONE-PAGER.md](docs/ONE-PAGER.md).
 
 ## The idea in three lines
 
@@ -131,7 +131,7 @@ agent ── call_tool(identity, run, step, tool, args, reason)
 | Pre- and post-images | Enabled on the mock systems. Rollback uses before-images captured by the gateway |
 | LangGraph MongoDB checkpointer | The live agent's own state |
 
-Voice (ElevenLabs): a step-up can be decided in conversation. A voice agent briefs the approver from the request and its closest precedent, and submits the spoken decision with an on-screen challenge code. The spoken reason becomes the text of the new precedent. See `voice/agent.md`.
+Voice (ElevenLabs): a step-up can be decided in conversation. A voice agent briefs the approver from the request and its closest precedent, and submits the spoken decision with an on-screen challenge code. The spoken reason becomes the text of the new precedent. The approver can also start the call: he states a rule about a request that was already allowed, the agent records it as a precedent (`flag_request`), and he can set the similarity threshold of the precedent rule by voice (`set_threshold`). See `voice/agent.md`.
 
 ## Demo scenario
 
