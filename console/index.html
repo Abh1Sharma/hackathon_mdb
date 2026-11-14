@@ -1016,7 +1016,7 @@ async function talk(textOnly) {
   const line = (whoIs, text) => {
     if (!text) return;
     lines.push({who: whoIs, text}); vui.line(whoIs, text);
-    if (whoIs === 'Warrant' && /keeping it at/i.test(text)) finishBrief(3500);
+    if (whoIs === 'Warrant' && /keeping it at/i.test(text)) finishBrief(4500);
   };
   const evidence = () => ({provider: 'elevenlabs', conversation_id: conversationId, mode: textOnly ? 'text' : 'voice',
                            transcript: lines.map(l => `${l.who}: ${l.text}`).join(' | ').slice(-900)});
@@ -1049,7 +1049,7 @@ async function talk(textOnly) {
           try {
             const r = await api('/policies/P-009/threshold', {by: 'human:sam', percent: Number(percent), channel: textOnly ? 'web' : 'voice'});
             await refreshPolicies();
-            finishBrief(5000);
+            finishBrief(7000);                              // long enough for Warrant to say the confirmation
             return `success: the threshold is now ${pct(r.min_score)} percent`;
           } catch (e) { return `error: ${e.message}`; }
         },
