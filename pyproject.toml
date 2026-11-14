@@ -1,0 +1,8 @@
+[project]
+name = "warrant"
+version = "0.1.0"
+description = "No agent action without a warrant: MongoDB Atlas as the identity, policy and audit layer for AI agents."
+requires-python = ">=3.12"
+dependencies = [
+    "pymongo>=4.11",
+]
