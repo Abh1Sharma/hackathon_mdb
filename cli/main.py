@@ -133,6 +133,39 @@ def cmd_scoreboard(args):
         print("README scoreboard table refreshed")
 
 
+def cmd_baseline(args):
+    """A live model with the rules in its prompt and unguarded tools. Spends API credit."""
+    import os
+    os.environ["MONGODB_DB"] = args.database
+    from evals import model_baseline
+    from gateway.db import client
+    db = client()[args.database]
+    schema.setup(db)
+    print(f"model-alone baseline: {model_baseline.MODEL}, rules in the prompt, no gate, {args.trials} trials ...")
+    result = model_baseline.run(db, trials=args.trials)
+    model_baseline.save(result)
+    print(f"\nattack runs that broke policy: {result['attack_runs_violated']} / {result['attack_runs']}")
+    for c in result["attacks"]:
+        marks = " ".join("X" if o else ("?" if o is None else ".") for o in c["outcomes"])
+        print(f"  {c['id']}  {marks}   {c['issue'][:70]}")
+    print(f"legitimate runs completed:     {result['legit_runs_completed']} / {result['legit_runs']}")
+    for c in result["legit"]:
+        marks = " ".join("ok" if o else ("?" if o is None else "NO") for o in c["outcomes"])
+        print(f"  {c['id']}  {marks}   {c['issue'][:70]}")
+    print(f"errors: {result['errors']}   tokens: {result['input_tokens']} in, {result['output_tokens']} out   "
+          f"estimated cost: ${result['estimated_cost_usd']}   time: {result['seconds']} s")
+    print(f"written rules broken: {result['written_rule_runs_violated']} / {result['written_rule_runs']}   "
+          f"harm with no written rule against it: {result['unwritten_runs_violated']} / {result['unwritten_runs']}")
+    print("receipt: docs/evidence/model-baseline.json")
+    readme = model_baseline.EVIDENCE.parent.parent.parent / "README.md"
+    text = readme.read_text()
+    start, end = "<!-- baseline:start -->", "<!-- baseline:end -->"
+    if start in text and end in text:
+        readme.write_text(text[:text.index(start) + len(start)] + "\n" + model_baseline.markdown(result) + "\n"
+                          + text[text.index(end):])
+        print("README baseline table refreshed")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="warrant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -158,6 +191,10 @@ def main():
     p = sub.add_parser("scoreboard", help="red team: the same attempts with and without the gate")
     p.add_argument("--database", default="warrant_test")
     p.set_defaults(fn=cmd_scoreboard)
+    p = sub.add_parser("baseline", help="live model with the rules in its prompt and no gate (spends API credit)")
+    p.add_argument("--database", default="warrant_test")
+    p.add_argument("--trials", type=int, default=3)
+    p.set_defaults(fn=cmd_baseline)
     args = parser.parse_args()
     args.fn(args)
 
