@@ -468,7 +468,10 @@ async function brief(approvalId, textOnly) {
         rule: q.explanation,
         agent_reason: q.reason,
         customer_note: q.note || 'none',
-        precedent: top ? `a similar request${top.amount_cents ? ' of ' + money(top.amount_cents) : ''} was ${top.decision} by ${who(top.decided_by)}. ${top.outcome_note || ''}` : 'none found',
+        // Only cite a past ruling aloud when it is genuinely close. A weak match would mislead the approver.
+        precedent: top && (top.rerank_score == null || top.rerank_score >= 0.6)
+          ? `a similar request${top.amount_cents ? ' of ' + money(top.amount_cents) : ''} was ${top.decision} by ${who(top.decided_by)}. ${top.outcome_note || ''}`
+          : 'none. Nothing closely similar has been ruled on before',
       },
       clientTools: {
         submit_decision: async ({decision, reason, challenge_code}) => {
