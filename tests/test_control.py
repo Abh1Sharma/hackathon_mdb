@@ -112,3 +112,26 @@ def test_at11_reconstruction_lists_every_step(db):
     assert refund["policies"] == ["P-002 v1"] and refund["result"] == "executed" and refund["verified"] is True
     transfer = next(s for s in account["steps"] if s["tool"] == "payments.transfer")
     assert transfer["decision"] == "deny" and transfer["result"] == "not executed" and "P-006 v1" in transfer["policies"]
+
+
+def test_voice_decision_needs_the_challenge_code(db):
+    out = scripted.run_queue(db, ["T3"])
+    paused = out["outcomes"]["T3"]
+    db.runs.update_one({"_id": out["run_id"]}, {"$set": {"status": "running"}})
+    code = db.approvals.find_one({"_id": paused["approval_id"]})["challenge"]
+    assert len(code) == 3 and code.isdigit()
+    wrong = "000" if code != "000" else "111"
+    refused = control.decide_approval(db, paused["approval_id"], "human:sam", "approved", channel="voice",
+                                      note="Carrier confirmed it", evidence={"challenge_code": wrong})
+    assert refused == {"ok": False, "error": "challenge code did not match"}
+    assert db.approvals.find_one({"_id": paused["approval_id"]})["status"] == "pending"
+    spoken = control.decide_approval(db, paused["approval_id"], "human:sam", "approved", channel="voice",
+                                     note="Carrier confirmed the damage", evidence={
+                                         "challenge_code": " ".join(code), "conversation_id": "conv_test",
+                                         "transcript": "Desk: Do you approve? | You: Approve, carrier confirmed it"})
+    assert spoken["ok"]
+    entry = [e for e in ledger.entries(db, out["run_id"]) if e["type"] == "approval"][0]
+    assert entry["payload"]["channel"] == "voice" and entry["payload"]["evidence"]["conversation_id"] == "conv_test"
+    assert entry["reason"] == "Carrier confirmed the damage"
+    learned = db.precedents.find_one({"approval_id": paused["approval_id"]})
+    assert learned["channel"] == "voice" and learned["outcome_note"] == "Carrier confirmed the damage"

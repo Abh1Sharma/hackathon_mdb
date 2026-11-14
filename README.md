@@ -40,6 +40,8 @@ agent ── call_tool(identity, run, step, tool, args, reason)
 | Pre- and post-images | Enabled on the mock systems. Rollback uses before-images captured by the gateway |
 | LangGraph MongoDB checkpointer | The live agent's own state |
 
+Voice (ElevenLabs): a step-up can be decided in conversation. A voice agent briefs the approver from the request and its closest precedent, and submits the spoken decision with an on-screen challenge code. The spoken reason becomes the text of the new precedent. See `voice/agent.md`.
+
 ## Demo scenario
 
 A refunds agent at a logistics company, acting for ops lead Dana, scoped to Ontario. Six tickets:
@@ -79,6 +81,7 @@ Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), and an Atlas cluster on
     agent/      scripted.py (no model) and live.py (Claude on LangGraph)
     systems/    mock orders, payments, CRM and email
     cli/        setup, reset, demo, replay, verify, precedents
+    voice/      ElevenLabs approvals agent: prompt, tool and how it plugs in
     tests/      acceptance tests, IDs match docs/02-SPEC.md and docs/00-SCOPE.md
     docs/       planning and scope documents
 

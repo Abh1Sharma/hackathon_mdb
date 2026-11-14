@@ -56,6 +56,10 @@ def decide_approval(db, approval_id: str, approver: str, decision: str, channel:
         if approval["expires_at"] <= t:
             db.approvals.update_one({"_id": approval_id}, {"$set": {"status": "expired"}}, session=session)
             return {"ok": False, "error": "approval request expired"}
+        if channel == "voice":
+            spoken = "".join(ch for ch in str((evidence or {}).get("challenge_code", "")) if ch.isdigit())
+            if spoken != approval.get("challenge"):
+                return {"ok": False, "error": "challenge code did not match"}
         request = approval["request"]
         db.approvals.update_one({"_id": approval_id}, {"$set": {
             "status": decision, "approver_id": approver, "channel": channel, "note": note,

@@ -50,6 +50,8 @@
   .actions { display:flex; gap:8px; }
   pre { white-space:pre-wrap; word-break:break-word; background:#0f1814; border:1px solid var(--line); border-radius:8px; padding:10px; font-size:12px; max-height:340px; overflow:auto; margin:0; }
   .empty { color:var(--dim); padding:8px 4px; }
+  .talk { background:#0f1814; border:1px solid var(--line); border-radius:6px; padding:8px; margin-top:8px; font-size:12.5px; max-height:170px; overflow:auto; }
+  .talk div { margin:3px 0; }
   #report div { margin:3px 0; }
 </style>
 </head>
@@ -89,7 +91,8 @@
 const $ = id => document.getElementById(id);
 const money = c => '$' + (c / 100).toLocaleString('en-US', {maximumFractionDigits: 0});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let runId = null, entries = new Map(), approvals = new Map();
+let runId = null, entries = new Map(), approvals = new Map(), cfg = {};
+let voice = {id: null, lines: [], session: null, textOnly: false};
 
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
@@ -141,8 +144,13 @@ function renderApprovals() {
       <p class="dim">${esc(q.agent_id)} on behalf of ${esc(q.on_behalf_of)}</p>
       <p>Agent reason: ${esc(q.reason)}</p>${q.note ? `<p>Customer note: <i>${esc(q.note)}</i></p>` : ''}
       <h2 style="margin-top:12px">Closest precedents (Atlas hybrid search, reranked)</h2>${precs || '<div class="empty">none</div>'}
-      <input type="text" placeholder="Your reason (becomes part of the precedent)">
-      <div class="actions"><button class="go" data-d="approved">Approve</button><button class="kill" data-d="denied">Deny</button></div></div>`;
+      <input type="text" class="note" placeholder="Your reason (becomes part of the precedent)">
+      <div class="actions"><button class="go" data-d="approved">Approve</button><button class="kill" data-d="denied">Deny</button>
+        <span class="spacer"></span>
+        ${cfg.elevenlabs_agent_id ? `<button data-v="voice">${voice.id === a._id ? 'End call' : '🎙 Brief me'}</button><button data-v="text" title="Same agent, typed instead of spoken">⌨</button>` : ''}</div>
+      ${cfg.elevenlabs_agent_id ? `<p class="dim" style="margin-top:8px">Voice challenge code: <b class="mono" style="color:var(--amber);font-size:15px">${esc(a.challenge)}</b></p>` : ''}
+      ${voice.id === a._id ? `<div class="talk">${voice.lines.map(l => `<div><b>${l.who}:</b> ${esc(l.text)}</div>`).join('') || '<span class="dim">Connecting…</span>'}</div>
+        ${voice.textOnly ? '<input type="text" class="say" placeholder="Type your reply and press Enter">' : ''}` : ''}</div>`;
   }).join('');
 }
 
@@ -197,13 +205,81 @@ $('timeline').onclick = ev => {
   if (row) $('detail').textContent = JSON.stringify(entries.get(row.dataset.id), null, 2);
 };
 $('approvals').onclick = async ev => {
+  const talk = ev.target.closest('button[data-v]');
+  if (talk) return brief(talk.closest('.card').dataset.id, talk.dataset.v === 'text');
   const button = ev.target.closest('button[data-d]');
   if (!button) return;
   const card = button.closest('.card');
   try {
-    await api(`/approvals/${card.dataset.id}/decision`, {approver: 'human:sam', decision: button.dataset.d, channel: 'web', note: card.querySelector('input').value});
+    await api(`/approvals/${card.dataset.id}/decision`, {approver: 'human:sam', decision: button.dataset.d, channel: 'web', note: card.querySelector('input.note').value});
   } catch (e) { report(`<div>${esc(e.message)}</div>`); }
 };
+$('approvals').onkeydown = ev => {
+  if (ev.key !== 'Enter' || !ev.target.classList.contains('say') || !voice.session) return;
+  const text = ev.target.value.trim();
+  if (!text) return;
+  voice.session.sendUserMessage(text);
+  voice.lines.push({who: 'You', text});
+  renderApprovals();
+  document.querySelector('input.say')?.focus();
+};
+
+// Voice step-up: an ElevenLabs agent briefs the approver from the approval request and its closest
+// precedent, then submits the spoken decision through a client tool. The policy is the control.
+// Voice is a channel, and the transcript is evidence. The decision still goes through the same API.
+async function endBrief() {
+  const session = voice.session;
+  voice = {id: null, lines: [], session: null, textOnly: false};
+  renderApprovals();
+  try { await session?.endSession(); } catch (e) {}
+}
+
+async function brief(approvalId, textOnly) {
+  if (voice.session) { const same = voice.id === approvalId; await endBrief(); if (same) return; }
+  const a = approvals.get(approvalId), q = a.request, top = (a.precedents || [])[0];
+  voice = {id: approvalId, lines: [], session: null, textOnly};
+  renderApprovals();
+  const amount = q.args.amount_cents ? money(q.args.amount_cents) : '';
+  const line = (who, text) => { voice.lines.push({who, text}); if (voice.id === approvalId) { const typed = document.querySelector('input.say')?.value; renderApprovals(); const box = document.querySelector('input.say'); if (box) { box.value = typed || ''; box.focus(); } const t = document.querySelector('.talk'); if (t) t.scrollTop = t.scrollHeight; } };
+  try {
+    const {Conversation} = await import('https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.36.1/+esm');
+    let conversationId = null;
+    voice.session = await Conversation.startSession({
+      agentId: cfg.elevenlabs_agent_id,
+      connectionType: textOnly ? 'websocket' : 'webrtc',
+      textOnly,
+      overrides: textOnly ? {conversation: {textOnly: true}} : undefined,
+      dynamicVariables: {
+        approver_name: 'Sam',
+        agent_name: 'Refund Agent 7',
+        on_behalf_of: 'Dana, the ops lead',
+        action: q.tool === 'payments.refund' ? `refund ${amount} on order ${q.args.order_id}` : `${q.tool} ${amount}`,
+        rule: q.explanation,
+        agent_reason: q.reason,
+        customer_note: q.note || 'none',
+        precedent: top ? `a similar request, ${top.amount_cents ? money(top.amount_cents) : ''}, was ${top.decision} by ${String(top.decided_by || '').replace('human:', '')}. ${top.outcome_note || ''}` : 'none found',
+      },
+      clientTools: {
+        submit_decision: async ({decision, reason, challenge_code}) => {
+          try {
+            await api(`/approvals/${approvalId}/decision`, {
+              approver: 'human:sam', decision, channel: 'voice', note: reason,
+              evidence: {provider: 'elevenlabs', conversation_id: conversationId, challenge_code: String(challenge_code),
+                         mode: textOnly ? 'text' : 'voice',
+                         transcript: voice.lines.map(l => `${l.who}: ${l.text}`).join(' | ').slice(-900)}});
+            report(`<div><b>${esc(decision)} by voice.</b> “${esc(reason)}” <span class="dim">conversation ${esc(conversationId || '')}</span></div>`);
+            setTimeout(endBrief, 4500);
+            return 'success: the decision is recorded';
+          } catch (e) { return `error: ${e.message}`; }
+        },
+      },
+      onConnect: ({conversationId: id}) => { conversationId = id; },
+      onMessage: m => line((m.source ?? m.role) === 'user' ? 'You' : 'Desk', m.message ?? m.text ?? ''),
+      onError: e => line('Error', typeof e === 'string' ? e : (e?.message || 'connection error')),
+      onDisconnect: () => { if (voice.id === approvalId && voice.session) line('Desk', '(call ended)'); },
+    });
+  } catch (e) { line('Error', e.message || String(e)); }
+}
 
 const feed = new EventSource('/events');
 feed.onmessage = m => {
@@ -214,6 +290,7 @@ feed.onmessage = m => {
   if (coll === 'approvals') { approvals.set(doc._id, doc); renderApprovals(); }
 };
 
+api('/config').then(c => { cfg = c; renderApprovals(); });
 api('/runs').then(list => list.length && loadRun(list[0]._id));
 </script>
 </body>

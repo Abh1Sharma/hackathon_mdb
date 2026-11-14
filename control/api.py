@@ -87,6 +87,12 @@ def console():
     return FileResponse(CONSOLE)
 
 
+@app.get("/config")
+def config():
+    return {"elevenlabs_agent_id": os.environ.get("ELEVENLABS_AGENT_ID", ""),
+            "mode": os.environ.get("WARRANT_AGENT_MODE", "scripted")}
+
+
 @app.post("/runs")
 def start_run(body: StartRun):
     db = get_db()
