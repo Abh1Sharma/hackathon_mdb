@@ -4,200 +4,277 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Warrant</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  /* Color values follow MongoDB's open LeafyGreen palette for a familiar feel. Warrant is not affiliated with MongoDB. */
+  /* System fonts only, so text never reflows while a web font loads. */
   :root {
-    --page:#001E2B; --panel:#112733; --inset:#1C2D38; --line:rgba(255,255,255,.10); --line2:#3D4F58;
-    --text:#E8EDEB; --text2:#C1C7C6; --muted:#889397;
-    --ok-bg:#023430; --ok-bd:#00684A; --ok-tx:#71F6BA;
-    --no-bg:#5B0000; --no-bd:#970606; --no-tx:#FFCDC7;
-    --hold-bg:#4C2100; --hold-bd:#944F01; --hold-tx:#FFEC9E;
-    --info-bg:#0C2657; --info-bd:#083C90; --info-tx:#C3E7FE;
-    --vio-bg:#2D0B59; --vio-bd:#5E0C9E; --vio-tx:#F1D4FD;
-    --gold:#E9B949; --link:#0498EC; --danger:#DB3030;
-    --sans:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --mono:"Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
-    --serif:Fraunces, "Iowan Old Style", Georgia, serif;
-    --fast:150ms ease-in-out; --slow:300ms ease-in-out;
+    --bg:#F7F7F5; --card:#FFFFFF; --ink:#0A0A0B; --ink2:#44444B; --muted:#8A8A93; --line:#E6E4E0; --soft:#F1F0EC;
+    --green:#00684A; --green-bg:#E7F8F1; --green-bd:#BFEBD9;
+    --amber:#8A4B00; --amber-bg:#FFF6DC; --amber-bd:#F5DFA0;
+    --red:#A1260D; --red-bg:#FDEDE8; --red-bd:#F6CFC4;
+    --blue:#0B4DA2; --blue-bg:#EAF3FF; --blue-bd:#C9DFFB;
+    --violet:#5E0C9E; --violet-bg:#F6ECFD; --violet-bd:#E5CCF8;
+    --sans:-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono:ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing:border-box; }
-  html, body { height:100%; }
-  body { margin:0; background:var(--page); color:var(--text); font:14px/1.5 var(--sans); display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
-  .mono { font-family:var(--mono); font-size:12.5px; }
-  .muted { color:var(--muted); }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 var(--sans); -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1240px; margin:0 auto; padding:0 28px 70px; }
+  .sp { flex:1; }
+  .muted { color:var(--muted); } .small { font-size:12.5px; } .mono { font-family:var(--mono); font-size:12px; }
 
-  /* top bar */
-  header { display:flex; align-items:center; gap:18px; padding:12px 22px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  .brand { display:flex; align-items:center; gap:10px; }
-  .seal { width:30px; height:30px; border-radius:50%; border:1.5px solid var(--gold); color:var(--gold); display:grid; place-items:center; font:600 16px/1 var(--serif); box-shadow:inset 0 0 0 3px var(--page), inset 0 0 0 4px rgba(233,185,73,.35); }
-  .brand b { font:600 21px/1 var(--serif); letter-spacing:.01em; }
-  .brand small { color:var(--muted); font-size:12.5px; }
-  .runbox { display:flex; align-items:center; gap:10px; }
-  .live { width:10px; height:10px; border-radius:50%; background:var(--muted); transition:background var(--slow); }
-  .live.running { background:#00ED64; animation:pulse 1.4s ease-in-out infinite; }
-  .live.waiting { background:var(--gold); animation:pulse 2.2s ease-in-out infinite; }
-  .live.killed { background:var(--danger); } .live.rolled_back { background:#B45AF2; } .live.completed { background:#00A35C; }
-  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(0,237,100,.45); } 50% { box-shadow:0 0 0 7px rgba(0,237,100,0); } }
-  select { font:inherit; font-size:13px; color:var(--text2); background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 8px; max-width:230px; }
-  .stats { display:flex; gap:22px; margin-left:6px; }
-  .stat b { display:block; font:600 20px/1.1 var(--serif); }
-  .stat span { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-  .spacer { flex:1; }
-  button { font:500 13px/1 var(--sans); color:var(--text); background:var(--inset); border:1px solid var(--line); border-radius:6px; padding:9px 13px; cursor:pointer; transition:border-color var(--fast), background var(--fast), opacity var(--fast); }
-  button:hover:not(:disabled) { border-color:var(--line2); background:#22363f; }
-  button:disabled { opacity:.38; cursor:default; }
-  button.primary { background:var(--ok-bd); border-color:#00A35C; color:#fff; }
-  button.primary:hover:not(:disabled) { background:#007a57; }
-  button.danger { background:#3a1010; border-color:var(--no-bd); color:var(--no-tx); }
-  button.ghost { background:transparent; }
+  header { display:flex; align-items:center; gap:12px; padding:14px 0 12px; }
+  .mark { width:28px; height:28px; border-radius:9px; background:var(--ink); color:#fff; display:inline-grid; place-items:center; font-weight:700; font-size:14px; flex:none; }
+  .mark.sm { width:20px; height:20px; border-radius:6px; font-size:11px; margin-right:8px; }
+  .brand { font-size:17px; font-weight:650; letter-spacing:-.01em; }
+  .tagline { color:var(--muted); font-size:14px; }
+  .env { font-size:12.5px; color:var(--ink2); border:1px solid var(--line); background:var(--card); padding:5px 11px; border-radius:999px; display:inline-flex; gap:7px; align-items:center; }
+  .env i { width:7px; height:7px; border-radius:50%; background:#00A35C; }
 
-  /* layout */
-  main { flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:18px; padding:18px 22px; }
-  @media (max-width:980px) { main { grid-template-columns:1fr; overflow:auto; } }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px 20px; min-width:0; }
-  .col { display:flex; flex-direction:column; gap:18px; min-height:0; overflow:auto; }
-  #runpanel { display:flex; flex-direction:column; min-height:0; }
-  h2 { font:600 12px/1 var(--sans); letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:0 0 14px; display:flex; gap:10px; align-items:baseline; }
-  h2 span { font-weight:400; letter-spacing:.02em; text-transform:none; }
-  #timeline { overflow:auto; flex:1; min-height:120px; margin:0 -8px; padding:0 8px; }
-  .empty { color:var(--muted); padding:10px 2px; }
+  .btn { font:500 14px/1 var(--sans); padding:10px 16px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; transition:background .15s, border-color .15s; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; }
+  .btn:hover:not(:disabled) { border-color:#CFCBC4; background:#FBFBFA; }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .btn.dark { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .btn.dark:hover:not(:disabled) { background:#2A2A30; border-color:#2A2A30; }
+  .btn.ghost { background:transparent; border-color:transparent; color:var(--ink2); }
+  .btn.ghost:hover:not(:disabled) { background:var(--soft); border-color:transparent; }
+  .btn.sm { padding:7px 12px; font-size:13px; }
+  .btn.danger { color:var(--red); border-color:var(--red-bd); background:var(--red-bg); }
+  .btn.wide { width:100%; justify-content:center; padding:13px 16px; margin-top:14px; }
+  kbd { font:600 11px/1 var(--mono); border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:3px 6px; background:var(--card); color:var(--ink2); }
+  .btn.dark kbd { background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.28); color:#fff; }
+  .link { background:none; border:0; color:var(--blue); font:inherit; cursor:pointer; padding:0; }
 
-  /* step rows */
-  .step { display:grid; grid-template-columns:30px minmax(0,1fr); gap:10px; padding:9px 8px; border-radius:8px; cursor:pointer; transition:background var(--fast); }
-  .step + .step, .step + .banner, .banner + .step { border-top:1px solid var(--line); border-top-left-radius:0; border-top-right-radius:0; }
-  .step:hover { background:rgba(255,255,255,.035); }
-  .step.new { animation:rowin 900ms ease-out; }
-  @keyframes rowin { from { background:rgba(0,237,100,.16); transform:translateY(4px); opacity:.4; } to { background:transparent; transform:none; opacity:1; } }
-  .step .n { color:var(--muted); font:600 12.5px/26px var(--mono); text-align:right; }
-  .line1 { display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-height:26px; }
-  .tool { font:600 13px/1 var(--mono); }
-  .amt { font:600 15px/1 var(--serif); color:var(--text); }
-  .why { color:var(--text2); font-size:13px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .chip { display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:24px; border:1px solid; font:600 10.5px/1 var(--sans); letter-spacing:.045em; text-transform:uppercase; white-space:nowrap; }
-  .chip.ok { background:var(--ok-bg); border-color:var(--ok-bd); color:var(--ok-tx); }
-  .chip.no { background:var(--no-bg); border-color:var(--no-bd); color:var(--no-tx); }
-  .chip.hold { background:var(--hold-bg); border-color:var(--hold-bd); color:var(--hold-tx); }
-  .chip.info { background:var(--info-bg); border-color:var(--info-bd); color:var(--info-tx); }
-  .chip.vio { background:var(--vio-bg); border-color:var(--vio-bd); color:var(--vio-tx); }
-  .chip.dim { background:transparent; border-color:var(--line2); color:var(--text2); }
-  .arrow { color:var(--line2); font-size:12px; }
-  .banner { margin:8px 0; padding:11px 14px 11px 22px; border-radius:12px; border:1px solid var(--no-bd); background:linear-gradient(90deg, var(--no-bd) 0 10px, rgba(91,0,0,.35) 10px); color:var(--no-tx); }
-  .detail { margin:2px 0 10px 40px; background:var(--page); border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
-  .detail .e { display:grid; grid-template-columns:34px 96px minmax(0,1fr); gap:10px; color:var(--text2); padding:2px 0; }
-  .detail pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font:12px/1.45 var(--mono); color:var(--text2); max-height:220px; overflow:auto; }
+  /* preamble */
+  #intro { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:30px 32px; }
+  .eyebrow { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  h1 { font-size:34px; line-height:1.12; letter-spacing:-.025em; margin:10px 0 8px; font-weight:650; }
+  .lede { font-size:17px; color:var(--ink2); margin:0 0 22px; max-width:780px; }
+  .three { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; }
+  .tcard { background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+  .tcard .k { font-size:12px; font-weight:650; letter-spacing:.06em; text-transform:uppercase; }
+  .tcard:nth-child(1) .k { color:var(--red); } .tcard:nth-child(3) .k { color:var(--green); }
+  .tcard p { margin:6px 0 0; color:var(--ink2); font-size:14.5px; }
+  #intro.compact { display:none; }
+  #intro-toggle { display:none; }
+  body.started #intro-toggle { display:inline-flex; }
 
-  .ticket { display:grid; grid-template-columns:30px minmax(0,1fr); gap:10px; padding:14px 8px 6px; }
-  .ticket .av { width:28px; height:28px; border-radius:50%; background:var(--inset); border:1px solid var(--line2); display:grid; place-items:center; font:600 13px/1 var(--sans); color:var(--text2); }
-  .ticket .from { font-size:13px; }
-  .ticket .msg { margin-top:5px; display:inline-block; max-width:92%; padding:8px 12px; border-radius:4px 14px 14px 14px; background:var(--inset); border:1px solid var(--line); color:var(--text); font-size:13.5px; }
-  .ticket + .step { border-top:0; }
+  /* steps */
+  #steps { display:flex; gap:10px; margin:14px 0 0; align-items:stretch; }
+  body.started #intro.compact + #steps { margin-top:2px; }
+  .tab { flex:1; text-align:left; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; cursor:pointer; display:grid; grid-template-columns:30px 1fr; column-gap:10px; row-gap:2px; align-items:center; font:inherit; color:var(--ink); transition:border-color .15s, box-shadow .15s; }
+  .tab .num { grid-row:1 / span 2; width:28px; height:28px; border-radius:50%; border:1px solid var(--line); display:grid; place-items:center; font:600 13px/1 var(--mono); color:var(--ink2); background:var(--bg); }
+  .tab .tt { font-weight:600; font-size:15px; }
+  .tab .st { font-size:12.5px; color:var(--muted); }
+  .tab .st.bad { color:var(--red); font-weight:600; } .tab .st.ok { color:var(--green); font-weight:600; } .tab .st.warn { color:var(--amber); font-weight:600; }
+  .tab.cur { border-color:var(--ink); box-shadow:0 0 0 1px var(--ink); }
+  .tab.cur .num { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .tab:disabled { opacity:.45; cursor:default; }
+  .undo { flex:0 0 auto; align-self:center; }
+  #caption { margin:12px 2px 10px; font-size:16px; color:var(--ink2); min-height:24px; }
+  #caption b { color:var(--ink); }
 
-  /* decision desk */
-  .card { border:1px solid var(--hold-bd); border-radius:12px; padding:16px; background:linear-gradient(180deg, rgba(76,33,0,.38), rgba(76,33,0,.10)); animation:rowin 600ms ease-out; }
-  .card + .card { margin-top:14px; }
-  .card h3 { margin:0; font:600 22px/1.2 var(--serif); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
-  .card h3 small { font:500 12.5px/1 var(--mono); color:var(--muted); }
-  .card p { margin:7px 0 0; color:var(--text2); }
-  .card p b { color:var(--text); font-weight:600; }
-  .note { color:var(--text); font-style:italic; }
-  .pipe { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:14px 0 8px; }
-  .pipe code { font:600 11.5px/1 var(--mono); padding:5px 8px; border-radius:6px; background:var(--page); border:1px solid var(--line); color:var(--info-tx); }
-  .pipe .ms { color:var(--muted); font-size:12px; margin-left:4px; }
-  .prec { border-left:3px solid var(--line2); padding:6px 0 6px 11px; margin:9px 0; font-size:13px; color:var(--text2); }
-  .prec.approved { border-color:#00A35C; } .prec.denied { border-color:var(--danger); }
-  .prec .head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px; }
-  .prec .said { color:var(--text); margin-top:3px; }
-  .learned { background:var(--gold); color:#2a1d00; border-radius:4px; padding:2px 7px; font:700 10.5px/1.2 var(--sans); letter-spacing:.05em; }
-  input[type=text] { width:100%; font:inherit; background:var(--page); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:9px 11px; margin-top:12px; transition:border-color var(--fast); }
-  input[type=text]:focus { outline:none; border-color:var(--link); }
-  .actions { display:flex; gap:8px; margin-top:10px; align-items:center; flex-wrap:wrap; }
-  .code { margin-left:auto; text-align:right; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-  .code b { display:block; font:600 22px/1.1 var(--mono); letter-spacing:.14em; color:var(--gold); }
-  .talk { margin-top:12px; background:var(--page); border:1px solid var(--line); border-radius:10px; padding:10px; max-height:210px; overflow:auto; display:flex; flex-direction:column; gap:6px; }
-  .bub { max-width:88%; padding:7px 11px; border-radius:12px; font-size:13px; background:var(--inset); align-self:flex-start; animation:rowin 300ms ease-out; }
-  .bub.you { align-self:flex-end; background:var(--ok-bd); color:#fff; }
-  .bub.err { background:var(--no-bg); color:var(--no-tx); }
-  .voicebar { display:flex; align-items:center; gap:10px; margin-top:10px; color:var(--muted); font-size:12px; }
-  .bars { display:flex; align-items:flex-end; gap:3px; height:18px; }
-  .bars i { width:3px; height:4px; border-radius:2px; background:var(--muted); }
-  .bars.speaking i, .bars.listening i { background:#A0B9D1; animation:lvl 900ms ease-in-out infinite; }
-  .bars.listening i { background:#00ED64; animation-duration:1500ms; }
-  .bars i:nth-child(2) { animation-delay:120ms; } .bars i:nth-child(3) { animation-delay:240ms; } .bars i:nth-child(4) { animation-delay:360ms; } .bars i:nth-child(5) { animation-delay:480ms; }
-  @keyframes lvl { 0%,100% { height:4px; } 50% { height:18px; } }
-  #notices > div { padding:9px 0; border-top:1px solid var(--line); color:var(--text2); animation:rowin 500ms ease-out; }
-  #notices > div:first-child { border-top:0; padding-top:0; }
-  #notices b { color:var(--text); }
+  /* stage */
+  main { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(0,1fr); gap:16px; align-items:start; }
+  @media (max-width:960px) { main, .three { grid-template-columns:1fr; } #steps { flex-direction:column; } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 20px 18px; min-height:360px; }
+  h2 { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:650; margin:0 0 12px; }
+  .empty { color:var(--muted); padding:48px 0; text-align:center; }
+  .msg { display:grid; grid-template-columns:34px 1fr; gap:10px; }
+  .av { width:32px; height:32px; border-radius:50%; background:var(--soft); border:1px solid var(--line); display:grid; place-items:center; font-weight:600; color:var(--ink2); }
+  .meta { font-size:13px; color:var(--muted); } .meta b { color:var(--ink); }
+  .bubble { display:inline-block; margin-top:5px; background:var(--soft); border-radius:4px 16px 16px 16px; padding:10px 14px; font-size:15px; max-width:96%; }
+  .ask { margin:14px 0 0 44px; }
+  .lbl { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .big { font-size:21px; letter-spacing:-.01em; margin-top:2px; } .big .muted { font-size:14px; letter-spacing:0; }
+  .why { color:var(--ink2); font-size:14px; margin-top:2px; }
+  .cp { margin:12px 0 0; border:1px solid var(--line); border-radius:14px; padding:12px 16px 6px; }
+  .cp-head { display:flex; align-items:center; flex-wrap:wrap; font-weight:600; font-size:14px; margin-bottom:8px; }
+  .cp .pill { text-transform:uppercase; letter-spacing:.04em; height:24px; }
+  .cp-head .muted { font-weight:400; margin-left:8px; font-size:13px; }
+  .row { display:grid; grid-template-columns:22px 1fr; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
+  .row i { width:18px; height:18px; border-radius:50%; margin-top:2px; display:grid; place-items:center; font-style:normal; font-size:11px; font-weight:700; color:#fff; }
+  .row.ok i { background:#00A35C; } .row.ok i::before { content:"\2713"; }
+  .row.warn i { background:#E8A100; } .row.warn i::before { content:"!"; }
+  .row.bad i { background:#D23A1D; } .row.bad i::before { content:"\2715"; }
+  .row b { font-size:14px; } .row p { margin:1px 0 0; color:var(--ink2); font-size:14px; }
+  .tag { font:600 11px/1 var(--mono); padding:2px 6px; border-radius:5px; background:var(--soft); color:var(--ink2); border:1px solid var(--line); white-space:nowrap; }
+  .verdict { margin-top:10px; border-radius:10px; padding:10px 14px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; border:1px solid; }
+  .verdict b { font-size:15px; letter-spacing:.03em; text-transform:uppercase; } .verdict span { font-size:13.5px; }
+  .verdict.ok, .out.ok { background:var(--green-bg); color:var(--green); border-color:var(--green-bd); }
+  .verdict.warn, .out.warn { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-bd); }
+  .verdict.bad, .out.bad { background:var(--red-bg); color:var(--red); border-color:var(--red-bd); }
+  .out { margin-top:12px; border-radius:12px; padding:12px 16px; border:1px solid var(--line); }
+  .out b { display:block; font-size:18px; letter-spacing:-.01em; } .out span { font-size:14px; }
+  .out.wait { color:var(--muted); background:var(--soft); }
+  .fresh { animation:pop .45s ease-out; }
+  @keyframes pop { from { transform:scale(.97); opacity:0; } to { transform:none; opacity:1; } }
+  .shimmer { background:linear-gradient(90deg, var(--muted) 0%, var(--ink) 40%, var(--muted) 80%); background-size:200% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:shim 1.8s linear infinite; }
+  @keyframes shim { from { background-position:200% 0; } to { background-position:-200% 0; } }
 
-  .rt { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
-  .rt .arm b { display:block; font:600 34px/1 var(--serif); }
-  .rt .arm span { display:block; margin-top:5px; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
-  .rt .arm.bad b { color:var(--no-tx); } .rt .arm.mid b { color:var(--hold-tx); } .rt .arm.good b { color:var(--ok-tx); }
-  .rt .to { color:var(--line2); font-size:22px; padding-bottom:16px; }
-  .rt p { flex-basis:100%; margin:6px 0 0; color:var(--text2); font-size:13px; }
+  /* Sam's inbox */
+  .idle { text-align:center; padding:70px 20px; color:var(--muted); }
+  .idle b { display:block; color:var(--ink); font-size:18px; margin-bottom:6px; letter-spacing:-.01em; }
+  .pill { display:inline-flex; align-items:center; height:22px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid; }
+  .pill.ok { background:var(--green-bg); color:var(--green); border-color:var(--green-bd); }
+  .pill.bad { background:var(--red-bg); color:var(--red); border-color:var(--red-bd); }
+  .pill.warn { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-bd); }
+  .rtop { display:flex; align-items:center; gap:10px; font-size:13px; flex-wrap:wrap; }
+  .ramt { font-size:40px; font-weight:650; letter-spacing:-.03em; line-height:1.1; margin:10px 0 2px; }
+  .ramt span { font-size:17px; font-weight:400; color:var(--ink2); letter-spacing:0; }
+  .rsec { margin-top:14px; } .rsec > b { font-size:13px; } .rsec p { margin:2px 0 0; color:var(--ink2); }
+  .prec { border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; }
+  .prec.denied { border-left:3px solid #D23A1D; } .prec.approved { border-left:3px solid #00A35C; }
+  .ph { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .pq { font-size:15px; margin:5px 0 2px; }
+  .learned { background:var(--ink); color:#fff; border-radius:999px; padding:3px 9px; font-size:11px; font-weight:600; }
+  input[type=text] { width:100%; font:inherit; padding:11px 14px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); margin-top:14px; }
+  input[type=text]:focus { outline:none; border-color:var(--ink); }
+  .ract { display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#D23A1D; }
+  .dot.on { animation:blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity:.25; } }
+  .codebox { margin-top:12px; font-size:13.5px; color:var(--ink2); display:flex; align-items:center; gap:10px; }
+  .codebox b { font:700 22px/1 var(--mono); letter-spacing:.18em; color:var(--ink); background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:6px 6px 6px 10px; }
+  .voice { display:grid; grid-template-columns:64px 1fr; gap:14px; align-items:center; margin-top:14px; padding:14px; border:1px solid var(--line); border-radius:14px; background:var(--bg); }
+  .voice[hidden] { display:none; }
+  .orb { width:56px; height:56px; border-radius:50%; background:radial-gradient(circle at 32% 28%, #fff 0%, #CADCFC 38%, #7FA2D9 100%); animation:breathe 3s ease-in-out infinite; }
+  .orb.speaking { animation:talk .9s ease-in-out infinite; }
+  .orb.listening { background:radial-gradient(circle at 32% 28%, #fff 0%, #C0FAE6 38%, #00A35C 100%); animation:listen 1.6s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform:scale(1.05); } }
+  @keyframes talk { 0%,100% { transform:scale(1); box-shadow:0 0 0 0 rgba(127,162,217,.45); } 50% { transform:scale(1.12); box-shadow:0 0 0 12px rgba(127,162,217,0); } }
+  @keyframes listen { 0%,100% { box-shadow:0 0 0 0 rgba(0,163,92,.4); } 50% { box-shadow:0 0 0 12px rgba(0,163,92,0); } }
+  .vstat { font-size:13px; font-weight:600; }
+  .vtalk { display:flex; flex-direction:column; gap:5px; margin-top:6px; max-height:150px; overflow:auto; }
+  .vb { align-self:flex-start; background:var(--card); border:1px solid var(--line); border-radius:4px 14px 14px 14px; padding:6px 11px; font-size:13.5px; max-width:95%; }
+  .vb.you { align-self:flex-end; background:var(--ink); color:#fff; border-color:var(--ink); border-radius:14px 4px 14px 14px; }
+  .vb.err { background:var(--red-bg); color:var(--red); border-color:var(--red-bd); }
+  .voice input[type=text] { margin-top:8px; padding:8px 12px; font-size:14px; }
+  .quote { font-size:24px; line-height:1.25; letter-spacing:-.015em; margin:12px 0; font-weight:600; }
+  .saved { border-radius:12px; padding:12px 14px; border:1px solid var(--line); background:var(--bg); }
+  .saved.done { background:var(--green-bg); border-color:var(--green-bd); color:var(--green); }
+  .saved p { margin:3px 0 0; font-size:14px; }
 
-  /* presenter stepper */
-  footer { display:flex; gap:10px; padding:12px 22px; border-top:1px solid var(--line); background:rgba(17,39,51,.7); overflow-x:auto; }
-  .stepbtn { flex:1; min-width:150px; display:flex; align-items:center; gap:10px; text-align:left; padding:10px 12px; border-radius:10px; }
-  .stepbtn kbd { flex:none; width:24px; height:24px; border-radius:6px; border:1px solid var(--line2); display:grid; place-items:center; font:600 12px/1 var(--mono); color:var(--text2); background:var(--page); }
-  .stepbtn span { display:block; font-weight:600; }
-  .stepbtn small { display:block; color:var(--muted); font-weight:400; margin-top:3px; font-size:11.5px; }
-  .stepbtn.done kbd { background:var(--ok-bd); border-color:#00A35C; color:#fff; }
-  .stepbtn.next { border-color:var(--gold); box-shadow:0 0 0 1px rgba(233,185,73,.35); }
+  /* what Atlas is doing */
+  #atlas { margin-top:18px; }
+  .tiles { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; }
+  @media (max-width:1100px) { .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; transition:border-color .4s, box-shadow .4s; }
+  .tile b { font-size:13.5px; display:block; }
+  .tile p { margin:3px 0 6px; font-size:12.5px; color:var(--ink2); line-height:1.4; }
+  .tile .stat { font:600 12px/1.3 var(--mono); color:var(--green); }
+  .tile.lit { border-color:#00A35C; box-shadow:0 0 0 3px rgba(0,163,92,.14); }
+
+  /* audit trail and red team */
+  details { background:var(--card); border:1px solid var(--line); border-radius:16px; margin-top:12px; padding:0 18px; }
+  summary { cursor:pointer; padding:14px 0; font-size:15px; font-weight:600; list-style:none; display:flex; align-items:baseline; gap:10px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::before { content:"\25B8"; color:var(--muted); }
+  details[open] summary::before { content:"\25BE"; }
+  summary span { color:var(--muted); font-size:13.5px; font-weight:400; }
+  .abar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-bottom:12px; }
+  select { font:inherit; font-size:13px; padding:7px 10px; border-radius:10px; border:1px solid var(--line); background:var(--card); max-width:280px; }
+  #trail { padding-bottom:16px; }
+  .t-ticket { display:grid; grid-template-columns:30px 1fr; gap:10px; padding:12px 0 4px; }
+  .t-ticket .bubble { font-size:13.5px; padding:7px 11px; }
+  .t-step { display:grid; grid-template-columns:30px 1fr; gap:10px; padding:8px 0; border-top:1px solid var(--line); cursor:pointer; }
+  .t-step .n { color:var(--muted); font:600 12px/24px var(--mono); text-align:right; }
+  .t-line { display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+  .t-tool { font:600 13px/1 var(--mono); }
+  .t-why { color:var(--ink2); font-size:13px; margin-top:2px; }
+  .chip { display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:999px; border:1px solid; font-size:11px; font-weight:600; white-space:nowrap; }
+  .chip.ok { background:var(--green-bg); color:var(--green); border-color:var(--green-bd); }
+  .chip.no { background:var(--red-bg); color:var(--red); border-color:var(--red-bd); }
+  .chip.hold { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-bd); }
+  .chip.info { background:var(--blue-bg); color:var(--blue); border-color:var(--blue-bd); }
+  .chip.vio { background:var(--violet-bg); color:var(--violet); border-color:var(--violet-bd); }
+  .chip.dim { background:var(--card); color:var(--ink2); border-color:var(--line); }
+  .t-detail { margin:4px 0 10px 40px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .t-detail pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font:12px/1.45 var(--mono); max-height:220px; overflow:auto; color:var(--ink2); }
+  .t-banner { margin:8px 0; padding:10px 14px; border-radius:10px; background:var(--red-bg); border:1px solid var(--red-bd); color:var(--red); }
+  .rt { display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; padding-bottom:16px; }
+  .rt .arm b { display:block; font-size:38px; font-weight:650; letter-spacing:-.03em; line-height:1; }
+  .rt .arm span { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .rt .arm.bad b { color:var(--red); } .rt .arm.mid b { color:var(--amber); } .rt .arm.good b { color:var(--green); }
+  .rt .to { color:var(--muted); font-size:22px; padding-bottom:14px; }
+  .rt p { flex-basis:100%; margin:4px 0 0; color:var(--ink2); font-size:14px; } .rt p b { color:var(--ink); }
+  #toasts { position:fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:8px; z-index:20; max-width:420px; }
+  .toast { background:var(--ink); color:#fff; border-radius:12px; padding:11px 14px; font-size:14px; box-shadow:0 8px 30px rgba(0,0,0,.18); animation:pop .3s ease-out; }
 </style>
 </head>
 <body>
-<header>
-  <div class="brand"><div class="seal">W</div><div><b>Warrant</b><br><small>no agent action without a warrant</small></div></div>
-  <div class="runbox"><span id="live" class="live"></span><select id="runs" title="Switch run"></select></div>
-  <div class="stats">
-    <div class="stat"><b id="s-ok">0</b><span>allowed</span></div>
-    <div class="stat"><b id="s-no">0</b><span>refused</span></div>
-    <div class="stat"><b id="s-hold">0</b><span>waiting</span></div>
-    <div class="stat"><b id="s-money">$0</b><span>moved</span></div>
-  </div>
-  <span class="spacer"></span>
-  <button class="danger" id="kill" disabled>Kill run</button>
-  <button id="rollback" disabled>Roll back</button>
-  <button id="verify" disabled>Verify ledger</button>
-  <button class="ghost" id="full" title="The full seven-ticket queue">Full queue</button>
-  <button class="ghost" id="reset">Reset</button>
-</header>
-<main>
-  <section id="runpanel">
-    <h2>Agent run <span>every decision, live from Atlas change streams</span></h2>
-    <div id="timeline"><div class="empty">Nothing yet. Press 1 to send a request through the gateway.</div></div>
+<div class="wrap">
+  <header>
+    <span class="mark">W</span><span class="brand">Warrant</span>
+    <span class="tagline">the checkpoint between an AI agent and the money</span>
+    <span class="sp"></span>
+    <span class="env"><i></i><span id="envtxt">MongoDB Atlas</span></span>
+    <button class="btn ghost sm" id="intro-toggle">Intro</button>
+    <button class="btn ghost sm" id="reset">Reset demo</button>
+  </header>
+
+  <section id="intro">
+    <div class="intro-full">
+      <div class="eyebrow">Agents you can audit, built on MongoDB Atlas</div>
+      <h1>Meet Sam. An AI agent now handles refunds for him.</h1>
+      <p class="lede">Sam runs payments at a freight company. He wants the agent to move fast, and he wants to be asked only when it matters.</p>
+      <div class="three">
+        <div class="tcard"><span class="k">The problem</span><p>The agent obeys every written rule and still pays requests nobody wrote a rule for. Afterwards, no one can say who allowed it.</p></div>
+        <div class="tcard"><span class="k">The checkpoint</span><p>Warrant sits between the agent and the money. Each action is checked in MongoDB Atlas: the written rules first, then every decision a human has made before.</p></div>
+        <div class="tcard"><span class="k">The payoff</span><p>Sam says no once, out loud. Atlas stores it, embeds it and searches it. The next similar request is stopped about a second later. No retraining, no new rule.</p></div>
+      </div>
+    </div>
   </section>
-  <div class="col">
-    <section>
-      <h2>Decision desk <span>requests that need a human</span></h2>
-      <div id="approvals"><div class="empty">Nothing is waiting.</div></div>
-    </section>
-    <section id="redteam" hidden>
-      <h2>Red team <span id="rt-sub"></span></h2>
-      <div class="rt" id="rt"></div>
-    </section>
-    <section>
-      <h2>Notices</h2>
-      <div id="notices"><div class="muted">Kill, rollback, learning and verification results appear here.</div></div>
-    </section>
-  </div>
-</main>
-<footer id="stepper"></footer>
+
+  <nav id="steps"></nav>
+  <div id="caption"></div>
+
+  <main>
+    <section class="panel"><h2>The support conversation</h2><div id="convo"></div></section>
+    <section class="panel"><h2>Sam's review inbox</h2><div id="inbox"></div></section>
+  </main>
+
+  <section id="atlas"><h2>What MongoDB Atlas is doing</h2><div class="tiles" id="tiles"></div></section>
+
+  <details id="redteam"><summary>Red team <span id="rt-sum">measured with checks the agent never sees</span></summary><div class="rt" id="rt"></div></details>
+
+  <details id="audit">
+    <summary>Audit trail <span>every decision, who allowed it, and the controls to stop and undo a run</span></summary>
+    <div class="abar">
+      <select id="runsel" title="Which run to show"></select>
+      <button class="btn sm danger" id="kill">Kill run</button>
+      <button class="btn sm" id="rollback">Roll back</button>
+      <button class="btn sm" id="verify">Verify ledger</button>
+      <span class="sp"></span>
+      <button class="btn sm ghost" id="full">Run the full support queue</button>
+    </div>
+    <div id="trail"></div>
+  </details>
+</div>
+<div id="toasts"></div>
+
 <script>
 const $ = id => document.getElementById(id);
-const money = c => '$' + (c / 100).toLocaleString('en-US', {maximumFractionDigits: 0});
+const money = c => '$' + (Number(c || 0) / 100).toLocaleString('en-US', {maximumFractionDigits: 0});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const who = id => String(id || '').replace(/^(human|agent):/, '');
+const who = id => { const s = String(id || '').replace(/^(human|agent|policy):/, ''); return s.charAt(0).toUpperCase() + s.slice(1); };
 const params = new URLSearchParams(location.search);
-const PACE = Number(params.get('pace') || 0.5);
-const DEMO_QUEUE = ['T1', 'T4', 'T5', 'T7'], LATE = ['T8'];
+const TRANSPORT = params.get('transport') || 'webrtc';
 
-let runId = null, runList = [], entries = new Map(), approvals = new Map(), cfg = {}, open = new Set();
-let learned = [], notices = [], tickets = new Map();
-let voice = {id: null, lines: [], session: null, textOnly: false, mode: ''};
+// The story, in three steps. Each step is one small agent run through the checkpoint.
+const DEMO = [
+  {n: 1, label: 'first', ticket: 'T8', title: 'A request no rule covers',
+   caption: 'A customer asks for $300 back, sent to someone else\'s card. It is under every limit, so the agent pays it.'},
+  {n: 2, label: 'ruling', ticket: 'T7', title: 'Sam is asked once',
+   caption: 'A bigger request of the same kind is over the agent\'s limit, so the checkpoint asks Sam. He answers out loud.'},
+  {n: 3, label: 'again', ticket: 'T8', title: 'It never happens again',
+   caption: 'The same $300 request comes back. Atlas finds Sam\'s ruling and stops it. No rule was edited.'},
+];
+
+let cfg = {}, score = null, tickets = new Map(), policies = new Map(), runs = new Map(), ledgers = new Map(), approvals = new Map();
+let learned = [], feedEvents = 0, viewStep = 0, auditRunId = null, introOpen = null;
+let voice = {id: null, session: null, textOnly: false, lines: []};
+const openSteps = new Set(), seen = new Set();
+const fresh = key => seen.has(key) ? '' : (seen.add(key), ' fresh');
 
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
@@ -205,19 +282,266 @@ async function api(path, body) {
   if (!r.ok) throw new Error(data.detail || r.statusText);
   return data;
 }
-
-function notice(html) {
-  notices.unshift(html);
-  notices = notices.slice(0, 5);
-  $('notices').innerHTML = notices.map(n => `<div>${n}</div>`).join('');
+function set(id, html) { const el = $(id); if (el._h !== html) { el.innerHTML = html; el._h = html; } }
+function toast(html, ms = 9000) {
+  const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = html;
+  $('toasts').appendChild(d); setTimeout(() => d.remove(), ms);
 }
 
-/* ---------- timeline: one row per agent step ---------- */
-const chip = (kind, text) => `<span class="chip ${kind}">${esc(text)}</span>`;
+/* ---------- reading the ledger ---------- */
+const runFor = label => [...runs.values()].filter(r => r.label === label).sort((a, b) => (a._id < b._id ? 1 : -1))[0];
+const entries = runId => [...(ledgers.get(runId)?.values() || [])].sort((a, b) => a.seq - b.seq);
+const latestStep = () => DEMO.reduce((n, s) => runFor(s.label) ? s.n : n, 0);
+async function loadLedger(runId) {
+  const m = new Map();
+  (await api(`/runs/${runId}/ledger`)).forEach(e => m.set(e._id, e));
+  ledgers.set(runId, m);
+}
 
-function rows() {
+// One step of the story, read back from what the checkpoint recorded.
+function caseOf(s) {
+  const run = runFor(s.label), ticket = tickets.get(s.ticket) || {};
+  if (!run) return {s, ticket, status: 'none'};
+  const es = entries(run._id);
+  const d = es.find(e => e.type === 'decision' && e.tool === 'payments.refund');
+  if (!d) return {s, run, ticket, status: 'working'};
+  const mine = es.filter(e => e.step === d.step);
+  const exec = mine.find(e => e.type === 'execution' && e.payload.ok);
+  const appr = mine.find(e => e.type === 'approval');
+  const undone = mine.find(e => e.type === 'rollback' && e.payload.undone);
+  const approval = [...approvals.values()].find(a => a.run_id === run._id && a.step === d.step);
+  let status;
+  if (undone) status = 'reversed';
+  else if (exec) status = 'paid';
+  else if (d.decision === 'deny') status = 'refused';
+  else if (d.decision === 'allow') status = 'paying';
+  else if (appr) status = appr.payload.decision === 'approved' ? 'approved' : 'denied';
+  else if (approval && approval.status !== 'pending') status = {approved: 'approved', denied: 'denied'}[approval.status] || 'cancelled';
+  else status = 'held';
+  return {s, run, ticket, d, appr, approval, status};
+}
+
+/* ---------- left: the support conversation ---------- */
+function rulesRow(d) {
+  const written = (d.payload.matched || []).filter(x => !policies.get(x.id)?.uses_precedents);
+  const text = x => `${esc(policies.get(x.id)?.description || '')} <span class="tag">${esc(x.id)}</span>`;
+  const deny = written.find(x => x.effect === 'deny'), hold = written.find(x => x.effect === 'step_up'), allow = written.find(x => x.effect === 'allow');
+  if (deny) return ['bad', 'Refused by a rule. ' + text(deny)];
+  if (hold) return ['warn', 'Over the agent\'s authority. ' + text(hold)];
+  if (allow) return ['ok', 'Passed. ' + text(allow)];
+  return ['bad', 'No rule allows this, and the default is to refuse.'];
+}
+function pastRow(d, approval) {
+  const p = d.payload.precedent || {};
+  if (!('denied_match' in p)) return null;
+  const tech = `<span class="muted">Atlas hybrid search, then rerank${p.ms != null ? ' · ' + p.ms + ' ms' : ''}</span>`;
+  const score = p.score != null ? Number(p.score).toFixed(2) : null;
+  if (p.denied_match) {
+    const top = (approval?.precedents || [])[0] || {};
+    return ['warn', `Resembles a request ${top.seeded === false ? 'Sam' : 'a human'} refused${score ? ' (match ' + score + ')' : ''}.
+      ${top.outcome_note ? `“${esc(top.outcome_note)}”` : ''} ${top.seeded === false ? '<span class="learned">Sam\'s ruling, a moment ago</span>' : ''}<br>${tech}`];
+  }
+  if (p.mode === 'error') return ['warn', 'The search failed, so the checkpoint fails closed and asks a human.'];
+  const closest = p.nearest_decision === 'approved' ? `The closest past decision was an approval${score ? ' (match ' + score + ')' : ''}.`
+                                                     : `No similar refusal on file${score ? ' (closest match ' + score + ')' : ''}.`;
+  return ['ok', `${closest}<br>${tech}`];
+}
+function outcomeHtml(c, amount, dest) {
+  const to = dest && dest !== 'original' ? ` to ${esc(dest)}` : '', f = fresh('o' + c.run._id + c.status);
+  switch (c.status) {
+    case 'paid': return c.s.label === 'first'
+      ? `<div class="out bad${f}"><b>${money(amount)} paid${to}.</b><span>No rule was broken, so the money left. A person would have said no.</span></div>`
+      : `<div class="out ok${f}"><b>${money(amount)} paid${to}.</b><span>Verified in the payment system.</span></div>`;
+    case 'reversed': return `<div class="out ok${f}"><b>Reversed. The ${money(amount)} came back.</b><span>The email that was already sent cannot be unsent, and the ledger says so.</span></div>`;
+    case 'held': return c.s.label === 'again'
+      ? `<div class="out ok${f}"><b>Stopped. Nothing is paid.</b><span>A moment ago this exact request was paid. The only thing that changed is Sam's ruling. No rule was edited.</span></div>`
+      : `<div class="out warn${f}"><b>Waiting for Sam. Nothing is paid.</b><span>The agent carries on with other work.</span></div>`;
+    case 'denied': return `<div class="out ok${f}"><b>Sam said no. Nothing was paid.</b>${c.approval?.note ? `<span>“${esc(c.approval.note)}”</span>` : ''}</div>`;
+    case 'approved': return `<div class="out ok${f}"><b>Sam approved it.</b><span>The agent can now spend the warrant.</span></div>`;
+    case 'refused': return `<div class="out ok${f}"><b>Refused. Nothing was paid.</b></div>`;
+    case 'cancelled': return `<div class="out warn${f}"><b>Cancelled.</b><span>The run was stopped.</span></div>`;
+    default: return `<div class="out wait"><span class="shimmer">Paying, then reading the payment back to verify it…</span></div>`;
+  }
+}
+function convoHtml(c) {
+  if (c.status === 'none') return `<div class="empty">Press <kbd>${c.s.n}</kbd> to play this step.</div>`;
+  const t = c.ticket, a = c.d?.payload?.args || {}, res = c.d?.payload?.resource || {};
+  const amount = a.amount_cents ?? t.requested_refund_cents, dest = a.destination ?? t.destination;
+  let h = `<div class="msg"><div class="av">${esc(String(t.customer || 'C')[0])}</div><div>
+      <div class="meta"><b>${esc(t.customer || 'Customer')}</b> · customer · order ${esc(res.id || t.order_id || '')}${res.total_cents ? ', ' + money(res.total_cents) + ', ' + esc(res.region) : ''}</div>
+      <div class="bubble">${esc(t.customer_note || '')}</div></div></div>
+    <div class="ask"><div class="lbl">The AI agent wants to</div>
+      <div class="big">Refund <b>${money(amount)}</b>${dest && dest !== 'original' ? ` to <b>${esc(dest)}</b> <span class="muted">not the card that was charged</span>` : ''}</div>
+      ${c.d?.reason ? `<div class="why">Its stated reason: “${esc(c.d.reason)}”</div>` : ''}</div>`;
+  if (!c.d) return h + `<div class="cp"><div class="cp-head"><span class="mark sm">W</span>Warrant checkpoint</div>
+      <div class="shimmer">Checking the written rules and Sam's past decisions in MongoDB Atlas…</div></div>`;
+  const [rk, rt] = rulesRow(c.d), past = pastRow(c.d, c.approval);
+  const v = {allow: ['ok', 'Allowed', 'A single-use warrant was issued for exactly this call.'],
+             step_up: ['warn', 'Held for Sam', 'Nothing is paid until a human decides.'],
+             deny: ['bad', 'Refused', 'Nothing is paid.']}[c.d.decision];
+  h += `<div class="cp"><div class="cp-head"><span class="mark sm">W</span>Warrant checkpoint <span class="muted">one transaction in MongoDB Atlas</span>
+        <span class="sp"></span><span class="pill ${v[0]}${fresh('v' + c.run._id)}" title="${esc(v[2])}">${v[1]}</span></div>
+      <div class="row ${rk}"><i></i><div><b>Written rules</b><p>${rt}</p></div></div>
+      ${past ? `<div class="row ${past[0]}"><i></i><div><b>Sam's past decisions</b><p>${past[1]}</p></div></div>` : ''}</div>`;
+  return h + outcomeHtml(c, amount, dest);
+}
+
+/* ---------- right: Sam's review inbox ---------- */
+const idle = (title, text) => `<div class="idle"><b>${title}</b>${text}</div>`;
+function reviewHtml(a) {
+  const q = a.request, dest = q.args.destination, byPrecedent = policies.get(q.rule)?.uses_precedents;
+  const close = (a.precedents || []).filter(p => p.rerank_score == null || p.rerank_score >= 0.6);
+  const precs = close.length ? close.map(p => `<div class="prec ${p.decision}">
+      <div class="ph"><span class="pill ${p.decision === 'approved' ? 'ok' : 'bad'}">${esc(p.decision)}</span>
+        ${p.seeded === false ? '<span class="learned">Your ruling, a moment ago</span>' : ''}
+        <span class="muted mono">${p.rerank_score != null ? 'match ' + Number(p.rerank_score).toFixed(2) : ''}</span></div>
+      <div class="pq">“${esc(p.outcome_note || '')}”</div>
+      <div class="muted small">${p.amount_cents ? money(p.amount_cents) + ' · ' : ''}${esc(p.summary)}</div></div>`).join('')
+    : `<p>Nothing closely similar has been ruled on before.</p>`;
+  return `<div class="review" data-id="${esc(a._id)}">
+    <div class="rtop"><span class="pill warn">Needs your decision</span><span class="muted">held by the checkpoint, nothing is paid yet</span></div>
+    <div class="ramt">${money(q.args.amount_cents)} <span>refund${dest && dest !== 'original' ? ' to ' + esc(dest) : ''}</span></div>
+    <div class="rsec"><b>Why you are being asked</b>
+      <p>${byPrecedent ? 'It passes the written rules, and it resembles a request that was refused before.' : esc(q.explanation) + '.'} <span class="tag">${esc(q.rule)}</span></p></div>
+    <div class="rsec"><b>Closest past decisions</b> <span class="muted small">$vectorSearch + $search → $rankFusion → $rerank${a.precedent_ms != null ? ' · ' + a.precedent_ms + ' ms' : ''}</span>${precs}</div>
+    <div class="voice" id="voice" hidden><div class="orb" id="orb"></div><div>
+      <div class="vstat" id="vstat">Connecting…</div><div class="vtalk" id="vtalk"></div>
+      <input type="text" id="vsay" placeholder="Type your reply and press Enter" hidden></div></div>
+    <input type="text" id="reason" placeholder="Your reason. It becomes the ruling the next request is checked against.">
+    <div class="ract"><button class="btn dark" data-d="denied">Deny</button><button class="btn" data-d="approved">Approve</button><span class="sp"></span>
+      ${cfg.elevenlabs_agent_id ? `<button class="btn" id="vbtn" data-v="voice"><span class="dot"></span>Decide by voice</button><button class="btn ghost" data-v="text" title="The same desk agent, typed">Type instead</button>` : ''}</div>
+    ${cfg.elevenlabs_agent_id ? `<div class="codebox">When you decide by voice, say this code <b>${esc(a.challenge)}</b></div>` : ''}
+  </div>`;
+}
+function rulingHtml(a) {
+  const id = 'PR-' + a._id.split('_').slice(-2).join('-'), l = learned.find(x => x._id === id);
+  return `<div class="ruling">
+    <div class="rtop"><span class="pill ${a.status === 'denied' ? 'bad' : 'ok'}">You ${a.status === 'denied' ? 'said no' : 'approved it'}</span>
+      <span class="muted">${a.channel === 'voice' ? 'by voice, with the challenge code' : 'in the console'}</span></div>
+    <div class="quote">“${esc(a.note || 'No reason given')}”</div>
+    <div class="saved ${l ? 'done' : ''}"><b>${l ? 'Saved as a ruling in MongoDB Atlas.' : '<span class="shimmer">Saving your ruling in MongoDB Atlas…</span>'}</b>
+      <p>${l ? `Atlas embedded and indexed it${l.seconds != null ? ' in about ' + l.seconds + ' s' : ''}. There is no embedding code in this app. Every refund is now checked against it.`
+             : 'Automated Embedding is indexing it.'}</p></div>
+    ${l && !runFor('again') ? `<button class="btn dark wide" data-run="3">Send the first request again <kbd>3</kbd></button>` : ''}
+  </div>`;
+}
+function inboxHtml(c) {
+  if (!c || c.status === 'none') return idle('Sam is not needed yet.', 'When the checkpoint is unsure, the request lands here.');
+  const a = c.approval;
+  if (a && a.status === 'pending') return reviewHtml(a);
+  if (c.s.label === 'ruling' && a && (a.status === 'denied' || a.status === 'approved')) return rulingHtml(a);
+  if (c.s.label === 'first' && (c.status === 'paid' || c.status === 'reversed'))
+    return idle('Nothing reached Sam.', 'The request passed every written rule, so nobody asked him. That is the gap.');
+  if (c.status === 'denied') return idle('You said no.', a?.note ? `“${esc(a.note)}”` : 'Nothing was paid.');
+  if (c.status === 'working' || c.status === 'paying') return idle('Sam is not needed yet.', 'The checkpoint is deciding.');
+  return idle('Nothing needs Sam right now.', '');
+}
+function renderInbox(c) {
+  // Never redraw the card under a live voice session: the orb, transcript and typed reason must stay put.
+  if (voice.id && approvals.get(voice.id)?.status === 'pending' && $('voice')) return;
+  set('inbox', inboxHtml(c));
+}
+
+/* ---------- steps ---------- */
+function stepState(s, c) {
+  if (c.status === 'none') return s.n === 3 && !learned.length ? ['', 'after Sam rules'] : ['', 'press ' + s.n];
+  const amount = money(c.d?.payload?.args?.amount_cents ?? c.ticket.requested_refund_cents);
+  return {paid: s.label === 'first' ? ['bad', amount + ' paid'] : ['ok', amount + ' paid'], reversed: ['ok', 'paid, then reversed'],
+          held: s.label === 'again' ? ['ok', 'stopped'] : ['warn', 'waiting for Sam'], denied: ['ok', 'Sam said no'],
+          approved: ['ok', 'Sam approved'], refused: ['ok', 'refused'], cancelled: ['warn', 'cancelled']}[c.status] || ['', 'working…'];
+}
+function stepsHtml() {
+  const first = caseOf(DEMO[0]);
+  return DEMO.map(s => {
+    const c = caseOf(s), [k, text] = stepState(s, c), blocked = c.status === 'none' && s.n === 3 && !learned.length;
+    return `<button class="tab ${s.n === viewStep ? 'cur' : ''}" data-step="${s.n}" ${blocked ? 'disabled' : ''}>
+      <span class="num">${s.n}</span><span class="tt">${esc(s.title)}</span><span class="st ${k}">${esc(text)}</span></button>`;
+  }).join('') + (first.status === 'paid' && runs.get(first.run._id)?.status === 'completed'
+    ? `<button class="btn sm undo" data-undo="1">Undo the first payment <kbd>4</kbd></button>` : '');
+}
+async function play(n) {
+  const s = DEMO[n - 1];
+  if (!s) return;
+  if (caseOf(s).status !== 'none') { viewStep = n; return render(); }
+  if (n === 3 && !learned.length) return toast('Step 3 waits until Sam has ruled in step 2 and Atlas has indexed it.');
+  viewStep = n; introOpen = null;
+  try {
+    const {run_id} = await api('/runs', {tickets: [s.ticket], label: s.label, pace: 0, lookup: false, mode: 'scripted'});
+    if (!runs.has(run_id)) runs.set(run_id, {_id: run_id, label: s.label, status: 'running'});
+    if (!ledgers.has(run_id)) ledgers.set(run_id, new Map());
+    auditRunId = run_id;
+  } catch (e) { toast(esc(e.message)); }
+  render();
+}
+async function undo() {
+  const run = runFor('first');
+  if (!run) return;
+  try {
+    const out = await api(`/runs/${run._id}/rollback`, {by: 'human:dana'});
+    if (!out.ok) return toast(esc(out.error));
+    viewStep = 1;
+    toast('<b>Reversed.</b> The first payment was returned from the ledger. The email already sent is marked as cannot undo.');
+  } catch (e) { toast(esc(e.message)); }
+  render();
+}
+
+/* ---------- what Atlas is doing ---------- */
+const TILES = [
+  ['tx', 'One transaction', 'The decision, the warrant and the ledger entry commit together or not at all.'],
+  ['search', 'Hybrid search, then rerank', '$rankFusion of $vectorSearch and $search, then $rerank, in one aggregation.'],
+  ['embed', 'Automated Embedding', 'Atlas embeds each ruling itself. There is no embedding code in this app.'],
+  ['cs', 'Change streams', 'This page, the kill switch and the waiting agent all update without polling.'],
+  ['ledger', 'Validated, chained ledger', 'The database rejects malformed entries. Each entry is hashed to the one before.'],
+];
+const tileState = {};
+function buildTiles() {
+  $('tiles').innerHTML = TILES.map(([id, name, text]) => `<div class="tile" id="tile-${id}"><b>${name}</b><p>${esc(text)}</p><div class="stat" id="stat-${id}"></div></div>`).join('');
+}
+function renderTiles() {
+  let decisions = 0, count = 0, lastMs = null, lastKey = '';
+  for (const m of ledgers.values()) for (const e of m.values()) {
+    count++;
+    if (e.type !== 'decision') continue;
+    decisions++;
+    const ms = e.payload?.precedent?.ms, key = e.run_id + String(e.seq).padStart(5, '0');
+    if (ms != null && key > lastKey) { lastKey = key; lastMs = ms; }
+  }
+  const last = learned[learned.length - 1];
+  const stats = {
+    tx: `${decisions} decision${decisions === 1 ? '' : 's'} committed`,
+    search: lastMs != null ? `last search: ${lastMs} ms` : 'runs on every refund',
+    embed: last ? (last.seconds != null ? `ruling searchable in ${last.seconds} s` : `${learned.length} ruling${learned.length === 1 ? '' : 's'} learned`) : 'waiting for a ruling',
+    cs: `${feedEvents} live event${feedEvents === 1 ? '' : 's'}`,
+    ledger: `${count} ledger entr${count === 1 ? 'y' : 'ies'}`,
+  };
+  for (const [id] of TILES) {
+    if (tileState[id] === stats[id]) continue;
+    const firstTime = tileState[id] === undefined;
+    tileState[id] = stats[id];
+    $('stat-' + id).textContent = stats[id];
+    if (!firstTime && id !== 'cs' && id !== 'ledger') {
+      const el = $('tile-' + id);
+      el.classList.add('lit'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('lit'), 1600);
+    }
+  }
+}
+function renderScore() {
+  if (!score?.arms) { $('redteam').hidden = true; return; }
+  const [none, gate, after] = score.arms, b = score.model_baseline;
+  $('rt-sum').textContent = `${none.attacks_executed} of ${score.attacks} attacks get through with no checkpoint, ${gate.attacks_executed} with Warrant, ${after.attacks_executed} after one human ruling`;
+  $('rt').innerHTML = `<div class="arm bad"><b>${none.attacks_executed}</b><span>no checkpoint</span></div><span class="to">→</span>
+    <div class="arm mid"><b>${gate.attacks_executed}</b><span>Warrant</span></div><span class="to">→</span>
+    <div class="arm good"><b>${after.attacks_executed}</b><span>after one human ruling</span></div>
+    <p>Attacks that got through, out of ${score.attacks}, scored by checks the agent never sees. Legitimate work completed: ${after.legit_completed} of ${score.legit} every time. No rule was edited between the last two.</p>
+    ${b ? `<p><b>${esc(b.model)} on its own</b>, with the rules written in its prompt and no checkpoint: it broke a written rule in ${b.written_rule_runs_violated} of ${b.written_rule_runs} runs, and still paid out in ${b.unwritten_runs_violated} of ${b.unwritten_runs} runs where no rule was written.</p>` : ''}`;
+  if (score.server_version) $('envtxt').textContent = `MongoDB Atlas · ${score.server_version}`;
+}
+
+/* ---------- audit trail ---------- */
+const chip = (kind, text) => `<span class="chip ${kind}">${esc(text)}</span>`;
+function trailRows(runId) {
   const steps = new Map(), out = [];
-  for (const e of [...entries.values()].sort((a, b) => a.seq - b.seq)) {
+  for (const e of entries(runId)) {
     if (e.step == null) { out.push({control: e}); continue; }
     let s = steps.get(e.step);
     if (!s) { s = {step: e.step, tool: e.tool, entries: []}; steps.set(e.step, s); out.push(s); }
@@ -226,7 +550,6 @@ function rows() {
   }
   return out;
 }
-
 function stepChips(s) {
   const out = [];
   for (const e of s.entries) {
@@ -236,24 +559,17 @@ function stepChips(s) {
       out.push(chip({allow: 'ok', deny: 'no', step_up: 'hold'}[e.decision], `${{allow: 'Allowed', deny: 'Refused', step_up: 'Needs a human'}[e.decision]} · ${refs}`));
       const pr = p.precedent || {};
       if (pr.denied_match && pr.nearest_id) out.push(chip('hold', `resembles ${pr.nearest_id}${pr.score != null ? ' · ' + Number(pr.score).toFixed(2) : ''}`));
-    } else if (e.type === 'approval') {
-      out.push(chip(p.decision === 'approved' ? 'ok' : 'no', `${p.decision} by ${who(e.actor)} · ${p.channel}`));
-    } else if (e.type === 'execution') {
-      out.push(chip(p.ok ? 'info' : 'no', p.ok ? 'Executed' : 'Failed'));
-    } else if (e.type === 'verification') {
+    } else if (e.type === 'approval') out.push(chip(p.decision === 'approved' ? 'ok' : 'no', `${p.decision} by ${who(e.actor)} · ${p.channel}`));
+    else if (e.type === 'execution') out.push(chip(p.ok ? 'info' : 'no', p.ok ? 'Executed' : 'Failed'));
+    else if (e.type === 'verification') {
       if (p.verified === true) out.push(chip('ok', 'Verified'));
-      else if (p.verified === 'unknown') out.push(chip('dim', 'Sent · cannot verify'));
+      else if (p.verified === 'unknown') out.push(chip('dim', 'Sent, cannot verify'));
       else if (p.verified === false) out.push(chip('no', 'Not verified'));
-    } else if (e.type === 'violation') {
-      out.push(chip('no', p.code === 'KILLED' ? 'Refused · run killed' : String(p.code).replace(/_/g, ' ')));
-    } else if (e.type === 'rollback') {
-      out.push(chip(p.undone ? 'vio' : 'hold', p.undone ? 'Undone' : 'Cannot undo'));
-    }
+    } else if (e.type === 'violation') out.push(chip('no', p.code === 'KILLED' ? 'Refused, run killed' : String(p.code).replace(/_/g, ' ').toLowerCase()));
+    else if (e.type === 'rollback') out.push(chip(p.undone ? 'vio' : 'hold', p.undone ? 'Undone' : 'Cannot undo'));
   }
-  return out.join('<span class="arrow">›</span>');
+  return out.join(' ');
 }
-
-// Which customer request a step belongs to: named in the call, or in the agent's stated reason.
 function ticketOf(s) {
   for (const e of s.entries) {
     const id = e.payload?.args?.ticket_id || (String(e.reason || '').match(/ticket (T\d+)/) || [])[1];
@@ -261,219 +577,118 @@ function ticketOf(s) {
   }
   return null;
 }
-function ticketHeader(id) {
-  const t = tickets.get(id);
-  if (!t) return '';
-  const asks = t.requested_refund_cents ? `asks for ${money(t.requested_refund_cents)}${t.destination ? ' to ' + t.destination : ''}` : 'asks for help';
-  return `<div class="ticket"><div class="av">${esc(String(t.customer || '?')[0])}</div><div>
-    <div class="from"><b>${esc(t.customer)}</b> <span class="muted">· order ${esc(t.order_id)} · ${esc(asks)}</span></div>
-    <div class="msg">${esc(t.customer_note)}</div></div></div>`;
-}
-
-function renderTimeline(flashStep) {
-  const list = rows();
-  if (!list.length) return;
+function trailHtml() {
+  const list = auditRunId ? trailRows(auditRunId) : [];
+  if (!list.length) return '<div class="empty">No entries yet.</div>';
   let current = null;
-  $('timeline').innerHTML = list.map(s => {
-    let header = '';
-    if (!s.control) {
-      const id = ticketOf(s);
-      if (id && id !== current) { current = id; header = ticketHeader(id); }
-    }
-    return header + rowHtml(s, flashStep);
-  }).join('');
-  if (flashStep != null) $('timeline').scrollTop = $('timeline').scrollHeight;
-}
-
-function rowHtml(s, flashStep) {
-  {
-    if (s.control) {
-      const e = s.control, p = e.payload || {};
-      return `<div class="banner"><b>Run killed by ${esc(who(e.actor))}.</b> ${esc(e.reason || '')} · ${p.warrants_revoked || 0} unused warrant(s) revoked</div>`;
+  return list.map(s => {
+    if (s.control) return `<div class="t-banner"><b>Run killed by ${esc(who(s.control.actor))}.</b> ${esc(s.control.reason || '')} · ${s.control.payload?.warrants_revoked || 0} unused warrant(s) revoked</div>`;
+    let head = '';
+    const id = ticketOf(s), t = tickets.get(id);
+    if (t && id !== current) {
+      current = id;
+      head = `<div class="t-ticket"><div class="av">${esc(String(t.customer || 'C')[0])}</div><div><div class="meta"><b>${esc(t.customer)}</b> · order ${esc(t.order_id)}</div><div class="bubble">${esc(t.customer_note)}</div></div></div>`;
     }
     const first = s.entries.find(e => e.type === 'decision') || s.entries[0];
     const amount = first.payload?.args?.amount_cents, dest = first.payload?.args?.destination;
-    const detail = !open.has(s.step) ? '' : `<div class="detail">${s.entries.map(e =>
-        `<div class="e mono"><span>#${e.seq}</span><span>${esc(e.type)}</span><span>${esc(e.prev_hash.slice(0, 10))}… → ${esc(e.hash.slice(0, 10))}…</span></div>`).join('')}
-        <pre>${esc(JSON.stringify(s.entries.map(e => ({seq: e.seq, type: e.type, actor: e.actor, on_behalf_of: e.on_behalf_of, decision: e.decision, policy_refs: e.policy_refs, precedent_refs: e.precedent_refs, warrant_id: e.warrant_id, payload: e.payload})), null, 2))}</pre></div>`;
-    return `<div class="step ${s.step === flashStep ? 'new' : ''}" data-step="${s.step}">
-      <div class="n">${s.step}</div>
-      <div><div class="line1"><span class="tool">${esc(s.tool || '')}</span>${amount ? `<span class="amt">${money(amount)}</span>` : ''}${dest && dest !== 'original' ? chip('dim', 'to ' + dest) + '<span class="arrow">›</span>' : ''}${stepChips(s)}</div>
-      <div class="why">${esc(first.reason || '')}</div></div></div>${detail}`;
-  }
-}
-
-function renderStats() {
-  let ok = 0, no = 0, moved = 0;
-  for (const e of entries.values()) {
-    const p = e.payload || {};
-    if (e.type === 'decision' && e.decision === 'allow') ok++;
-    if ((e.type === 'decision' && e.decision === 'deny') || e.type === 'violation') no++;
-    if (e.type === 'execution' && p.ok && e.tool === 'payments.refund') moved += p.args?.amount_cents || 0;
-    if (e.type === 'rollback' && p.undone && p.amount_cents) moved -= p.amount_cents;
-  }
-  const waiting = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId).length;
-  $('s-ok').textContent = ok; $('s-no').textContent = no; $('s-hold').textContent = waiting; $('s-money').textContent = money(moved);
-  const run = runList.find(r => r._id === runId);
-  $('live').className = 'live ' + (run ? (run.status === 'running' && waiting ? 'waiting' : run.status) : '');
-}
-
-/* ---------- decision desk ---------- */
-function renderApprovals() {
-  const pending = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId);
-  renderStats(); renderStepper();
-  if (!pending.length) { $('approvals').innerHTML = '<div class="empty">Nothing is waiting.</div>'; return; }
-  $('approvals').innerHTML = pending.map(a => {
-    const q = a.request, talking = voice.id === a._id;
-    const precs = (a.precedents || []).map(p => `<div class="prec ${p.decision}">
-        <div class="head">${chip(p.decision === 'approved' ? 'ok' : 'no', p.decision)}${p.seeded === false ? '<span class="learned">LEARNED THIS SESSION</span>' : ''}
-          <span class="mono muted">${esc(p._id)}${p.rerank_score != null ? ' · rerank ' + Number(p.rerank_score).toFixed(2) : ''}</span></div>
-        ${p.amount_cents ? `<b>${money(p.amount_cents)}</b> · ` : ''}${esc(p.summary)}<div class="said">${esc(who(p.decided_by))}: “${esc(p.outcome_note || '')}”</div></div>`).join('');
-    return `<div class="card" data-id="${esc(a._id)}">
-      <h3>${q.args.amount_cents ? money(q.args.amount_cents) : ''} ${esc(q.tool)} ${q.args.destination && q.args.destination !== 'original' ? chip('dim', 'to ' + q.args.destination) : ''}<small>step ${a.step}</small></h3>
-      <p><b>${esc(q.rule)}</b> ${esc(q.explanation)}</p>
-      <p>${esc(who(q.agent_id))} on behalf of ${esc(who(q.on_behalf_of))}: ${esc(q.reason)}</p>
-      ${q.note ? `<p class="note">“${esc(q.note)}”</p>` : ''}
-      <div class="pipe"><code>$vectorSearch · autoEmbed</code><span class="arrow">+</span><code>$search</code><span class="arrow">→</span><code>$rankFusion</code><span class="arrow">→</span><code>$rerank</code>
-        <span class="ms">closest past decisions${a.precedent_ms != null ? ' · ' + a.precedent_ms + ' ms in Atlas' : ''}</span></div>
-      ${precs || '<div class="empty">No precedents found.</div>'}
-      <input type="text" class="reason" placeholder="Your reason. It becomes part of the precedent.">
-      <div class="actions"><button class="primary" data-d="approved">Approve</button><button class="danger" data-d="denied">Deny</button>
-        ${cfg.elevenlabs_agent_id ? `<button data-v="voice">${talking && !voice.textOnly ? 'End call' : '🎙 Brief me'}</button><button class="ghost" data-v="text" title="The same agent, typed instead of spoken">⌨</button>
-        <div class="code">say this code<b>${esc(a.challenge)}</b></div>` : ''}</div>
-      ${talking ? `<div class="voicebar"><span class="bars ${esc(voice.mode)}"><i></i><i></i><i></i><i></i><i></i></span>${voice.session ? (voice.textOnly ? 'typed session' : (voice.mode || 'connected')) : 'connecting…'}</div>
-        <div class="talk">${voice.lines.map(l => `<div class="bub ${l.who === 'You' ? 'you' : l.who === 'Error' ? 'err' : ''}">${esc(l.text)}</div>`).join('')}</div>
-        ${voice.textOnly ? '<input type="text" class="say" placeholder="Type your reply and press Enter">' : ''}` : ''}</div>`;
+    const detail = !openSteps.has(s.step) ? '' : `<div class="t-detail">${s.entries.map(e =>
+      `<div class="mono">#${e.seq} ${esc(e.type)} · ${esc(e.prev_hash.slice(0, 10))}… → ${esc(e.hash.slice(0, 10))}…</div>`).join('')}
+      <pre>${esc(JSON.stringify(s.entries.map(e => ({seq: e.seq, type: e.type, actor: e.actor, on_behalf_of: e.on_behalf_of, decision: e.decision, policy_refs: e.policy_refs, precedent_refs: e.precedent_refs, warrant_id: e.warrant_id, payload: e.payload})), null, 2))}</pre></div>`;
+    return head + `<div class="t-step" data-step="${s.step}"><div class="n">${s.step}</div><div>
+      <div class="t-line"><span class="t-tool">${esc(s.tool || '')}</span>${amount ? `<b>${money(amount)}</b>` : ''}${dest && dest !== 'original' ? chip('dim', 'to ' + dest) : ''}${stepChips(s)}</div>
+      <div class="t-why">${esc(first.reason || '')}</div></div></div>` + detail;
   }).join('');
-  const t = document.querySelector('.talk'); if (t) t.scrollTop = t.scrollHeight;
 }
-
-/* ---------- runs ---------- */
-async function listRuns() {
-  runList = await api('/runs');
-  $('runs').innerHTML = runList.map(r => `<option value="${esc(r._id)}" ${r._id === runId ? 'selected' : ''}>${esc(r.label || 'run')} · ${esc(r._id.slice(4))} · ${esc(r.status.replace('_', ' '))}</option>`).join('') || '<option>no runs yet</option>';
-  const run = runList.find(r => r._id === runId);
+function renderAudit() {
+  const list = [...runs.values()].sort((a, b) => (a._id < b._id ? 1 : -1));
+  set('runsel', list.map(r => `<option value="${esc(r._id)}" ${r._id === auditRunId ? 'selected' : ''}>${esc(r.label || 'run')} · ${esc(r._id.slice(4))} · ${esc(String(r.status || '').replace('_', ' '))}</option>`).join('') || '<option>no runs yet</option>');
+  const run = runs.get(auditRunId);
   $('kill').disabled = !run || run.status !== 'running';
   $('rollback').disabled = !run || !['killed', 'completed'].includes(run.status);
   $('verify').disabled = !run;
-  renderStats(); renderStepper();
-  return runList;
+  set('trail', trailHtml());
 }
 
-async function loadRun(id) {
-  runId = id; entries.clear(); open.clear();
-  $('timeline').innerHTML = '<div class="empty">Waiting for the first call…</div>';
-  (await api(`/runs/${id}/ledger`)).forEach(e => entries.set(e._id, e));
-  (await api('/approvals?status=pending')).forEach(a => approvals.set(a._id, a));
-  renderTimeline(); renderApprovals(); await listRuns();
+/* ---------- render ---------- */
+function render() {
+  const n = viewStep, c = n ? caseOf(DEMO[n - 1]) : null;
+  document.body.classList.toggle('started', latestStep() > 0);
+  $('intro').classList.toggle('compact', introOpen === null ? latestStep() > 0 : !introOpen);
+  set('steps', stepsHtml());
+  set('caption', c ? `<b>${esc(c.s.title)}.</b> ${esc(c.s.caption)}` : 'Press <kbd>1</kbd> to begin.');
+  set('convo', c ? convoHtml(c) : '<div class="empty">A customer is about to ask the AI agent for a refund.</div>');
+  renderInbox(c);
+  renderTiles();
+  renderAudit();
 }
 
-async function startRun(tickets, label) {
-  const mode = params.get('mode');
-  const body = {tickets, label, pace: PACE};
-  if (mode && label !== 'first' && label !== 'again') body.mode = mode;
-  const {run_id} = await api('/runs', body);
-  await loadRun(run_id);
-}
-
-function showRollback(r) {
-  if (!r.ok) return notice(esc(r.error));
-  notice(`<b>Rolled back.</b> ` + r.undone.map(u => `Step ${u.step} ${esc(u.tool)} undone: ${esc(u.compensation)}${u.amount_cents ? ' of ' + money(u.amount_cents) : ''}.`).join(' ') + ' ' +
-    r.not_undone.map(u => `<span style="color:var(--hold-tx)">Step ${u.step} ${esc(u.tool)}: ${esc(u.follow_up)}.</span>`).join(' '));
-}
-
-$('runs').onchange = ev => loadRun(ev.target.value);
-$('full').onclick = () => startRun(null, 'full queue');
-$('kill').onclick = async () => {
-  const r = await api(`/runs/${runId}/kill`, {by: 'human:dana', reason: 'Stopped by the reviewer'});
-  notice(`<b>Killed.</b> ${r.revoked} unused warrant(s) revoked, ${r.approvals_cancelled || 0} pending approval(s) cancelled. The agent's next call is refused.`);
-};
-$('rollback').onclick = async () => showRollback(await api(`/runs/${runId}/rollback`, {by: 'human:dana'}));
-$('verify').onclick = async () => {
-  const v = await api(`/runs/${runId}/verify`);
-  notice(v.ok ? `<b style="color:var(--ok-tx)">Ledger intact.</b> ${v.entries} entries, chain head <span class="mono">${v.head.slice(0, 16)}…</span>`
-              : `<b style="color:var(--no-tx)">Ledger altered at entry ${v.broken_at}.</b> ${esc(v.why)}`);
-};
-$('reset').onclick = async () => {
-  notice('Resetting. Waiting for Atlas to drop this session\'s rulings from the search index…');
-  await api('/reset', {});
-  location.reload();
-};
-$('timeline').onclick = ev => {
-  const row = ev.target.closest('.step');
-  if (!row) return;
-  const n = Number(row.dataset.step);
-  open.has(n) ? open.delete(n) : open.add(n);
-  renderTimeline();
-};
-
-/* ---------- approvals: buttons and voice ---------- */
-$('approvals').onclick = async ev => {
-  const talk = ev.target.closest('button[data-v]');
-  if (talk) return brief(talk.closest('.card').dataset.id, talk.dataset.v === 'text');
-  const button = ev.target.closest('button[data-d]');
-  if (!button) return;
-  const card = button.closest('.card');
+/* ---------- Sam decides: by click, or by voice ---------- */
+async function decide(id, decision) {
   try {
-    await api(`/approvals/${card.dataset.id}/decision`, {approver: 'human:sam', decision: button.dataset.d, channel: 'web', note: card.querySelector('input.reason').value});
-  } catch (e) { notice(esc(e.message)); }
+    await api(`/approvals/${id}/decision`, {approver: 'human:sam', decision, channel: 'web', note: $('reason')?.value || ''});
+  } catch (e) { toast(esc(e.message)); }
+}
+const vui = {
+  show(textOnly) {
+    $('voice').hidden = false; $('vsay').hidden = !textOnly; $('vtalk').innerHTML = '';
+    $('vstat').textContent = 'Connecting…'; $('orb').className = 'orb';
+    if ($('vbtn')) $('vbtn').innerHTML = '<span class="dot on"></span>End';
+  },
+  line(whoIs, text) {
+    if (!text || !$('vtalk')) return;
+    const d = document.createElement('div');
+    d.className = 'vb' + (whoIs === 'You' ? ' you' : whoIs === 'Error' ? ' err' : '');
+    d.textContent = text;
+    $('vtalk').appendChild(d); $('vtalk').scrollTop = $('vtalk').scrollHeight;
+  },
+  mode(m) {
+    if (!$('orb')) return;
+    $('orb').className = 'orb ' + (m || '');
+    $('vstat').textContent = {speaking: 'The desk is speaking', listening: 'Listening. Go ahead, Sam.'}[m] || (voice.textOnly ? 'Typed session' : 'Connected');
+  },
+  hide() {
+    if ($('voice')) $('voice').hidden = true;
+    if ($('vbtn')) $('vbtn').innerHTML = '<span class="dot"></span>Decide by voice';
+  },
 };
-$('approvals').onkeydown = ev => {
-  if (ev.key !== 'Enter' || !ev.target.classList.contains('say') || !voice.session) return;
-  const text = ev.target.value.trim();
-  if (!text) return;
-  voice.session.sendUserMessage(text);
-  voice.lines.push({who: 'You', text});
-  renderApprovals();
-  document.querySelector('input.say')?.focus();
-};
-
-// Voice step-up. An ElevenLabs agent briefs the approver from the approval request and its closest
-// precedent, then submits the decision through a client tool. The policy is the control. Voice is a
-// channel, the challenge code ties it to this screen, and the transcript is stored as evidence.
 async function endBrief() {
   const session = voice.session;
-  voice = {id: null, lines: [], session: null, textOnly: false, mode: ''};
-  renderApprovals();
+  voice = {id: null, session: null, textOnly: false, lines: []};
+  vui.hide();
   try { await session?.endSession(); } catch (e) {}
+  render();
 }
-
+// Voice step-up. An ElevenLabs agent briefs Sam from the approval request and its closest past ruling,
+// then submits his decision through a client tool. Policy is the control. Voice is a channel: the code
+// on screen ties it to this approver, and the transcript is stored in the ledger as evidence.
 async function brief(approvalId, textOnly) {
-  if (voice.id) { const same = voice.id === approvalId && voice.textOnly === textOnly; await endBrief(); if (same) return; }
-  const a = approvals.get(approvalId), q = a.request, top = (a.precedents || [])[0];
-  voice = {id: approvalId, lines: [], session: null, textOnly, mode: ''};
-  renderApprovals();
-  const amount = q.args.amount_cents ? money(q.args.amount_cents) : '';
-  const redraw = () => {
-    if (voice.id !== approvalId) return;
-    const typed = document.querySelector('input.say')?.value, reason = document.querySelector('input.reason')?.value;
-    renderApprovals();
-    const box = document.querySelector('input.say'); if (box) { box.value = typed || ''; box.focus(); }
-    const r = document.querySelector('input.reason'); if (r) r.value = reason || '';
-  };
-  const line = (who, text) => { if (text) { voice.lines.push({who, text}); redraw(); } };
+  if (voice.id) return;
+  const a = approvals.get(approvalId);
+  if (!a || a.status !== 'pending') return;
+  const q = a.request, dest = q.args.destination, top = (a.precedents || [])[0];
+  const close = top && (top.rerank_score == null || top.rerank_score >= 0.6);
+  const amount = money(q.args.amount_cents);
+  voice = {id: approvalId, session: null, textOnly, lines: []};
+  vui.show(textOnly);
+  const line = (whoIs, text) => { if (text) { voice.lines.push({who: whoIs, text}); vui.line(whoIs, text); } };
   try {
     const {Conversation} = await import('https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.36.1/+esm');
     let conversationId = null;
-    voice.session = await Conversation.startSession({
+    const session = await Conversation.startSession({
       agentId: cfg.elevenlabs_agent_id,
-      connectionType: textOnly ? 'websocket' : 'webrtc',
+      connectionType: textOnly ? 'websocket' : TRANSPORT,
       textOnly,
       overrides: textOnly ? {conversation: {textOnly: true}} : undefined,
       dynamicVariables: {
         approver_name: 'Sam',
-        agent_name: 'Refund Agent 7',
-        on_behalf_of: 'Dana, the ops lead',
-        action: q.tool === 'payments.refund'
-          ? `refund ${amount} on order ${q.args.order_id}${q.args.destination && q.args.destination !== 'original' ? ', sent to ' + q.args.destination + ' instead of the card that was charged' : ''}`
-          : `${q.tool} ${amount}`,
-        rule: q.explanation,
+        agent_name: 'Your support agent',
+        on_behalf_of: 'Sam',
+        action: `refund ${amount}${dest && dest !== 'original' ? ' to a card that is not the one charged' : ''}`,
+        rule: policies.get(q.rule)?.uses_precedents ? 'It resembles a request you refused before' : q.explanation,
+        precedent: close ? (top.seeded === false ? `Your earlier ruling was: ${top.outcome_note || ''}` : `A similar request was ${top.decision} before: ${top.outcome_note || ''}`)
+                         : 'No similar ruling is on file',
         agent_reason: q.reason,
         customer_note: q.note || 'none',
-        // Only cite a past ruling aloud when it is genuinely close. A weak match would mislead the approver.
-        precedent: top && (top.rerank_score == null || top.rerank_score >= 0.6)
-          ? `a similar request${top.amount_cents ? ' of ' + money(top.amount_cents) : ''} was ${top.decision} by ${who(top.decided_by)}. ${top.outcome_note || ''}`
-          : 'none. Nothing closely similar has been ruled on before',
       },
       clientTools: {
         submit_decision: async ({decision, reason, challenge_code}) => {
@@ -483,86 +698,113 @@ async function brief(approvalId, textOnly) {
               evidence: {provider: 'elevenlabs', conversation_id: conversationId, challenge_code: String(challenge_code),
                          mode: textOnly ? 'text' : 'voice',
                          transcript: voice.lines.map(l => `${l.who}: ${l.text}`).join(' | ').slice(-900)}});
-            notice(`<b>${esc(decision)} by voice.</b> “${esc(reason)}” <span class="muted mono">${esc(conversationId || '')}</span>`);
-            setTimeout(endBrief, 3500);
+            setTimeout(endBrief, 2200);
             return 'success: the decision is recorded';
           } catch (e) { return `error: ${e.message}`; }
         },
       },
-      onConnect: ({conversationId: id}) => { conversationId = id; redraw(); },
-      onModeChange: m => { voice.mode = m?.mode || ''; redraw(); },
+      onConnect: ({conversationId: id}) => { conversationId = id; vui.mode(''); },
+      onModeChange: m => {
+        vui.mode(m?.mode || '');
+        if (params.get('halfduplex') === '1') { try { voice.session?.setMicMuted(m?.mode === 'speaking'); } catch (e) {} }
+      },
       onMessage: m => line((m.source ?? m.role) === 'user' ? 'You' : 'Desk', m.message ?? m.text ?? ''),
       onError: e => line('Error', typeof e === 'string' ? e : (e?.message || 'connection error')),
-      onDisconnect: () => { if (voice.id === approvalId) { voice.mode = ''; redraw(); } },
+      onDisconnect: () => { if (voice.id === approvalId && $('vstat')) $('vstat').textContent = 'Call ended'; },
     });
-    redraw();
+    if (voice.id !== approvalId) { try { await session.endSession(); } catch (e) {} return; }
+    voice.session = session;
   } catch (e) { line('Error', e.message || String(e)); }
 }
 
-/* ---------- presenter stepper: the demo in five keys ---------- */
-const byLabel = label => runList.filter(r => r.label === label).sort((a, b) => a.started_at < b.started_at ? -1 : 1);
-function stepperState() {
-  const first = byLabel('first')[0], queue = byLabel('queue')[0], again = byLabel('again')[0];
-  const pending = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId);
-  return [
-    {key: 1, title: 'A customer asks for $300', sub: 'To someone else\'s card. Under every limit, so it is paid.', enabled: true, done: !!first, run: () => startRun(LATE, 'first')},
-    {key: 2, title: 'The support queue', sub: 'Allowed, refused, and one for a human.', enabled: true, done: !!queue, run: () => startRun(DEMO_QUEUE, 'queue')},
-    {key: 3, title: 'A human rules', sub: cfg.elevenlabs_agent_id ? 'By voice, with a challenge code.' : 'Give a reason and decide.', enabled: pending.length > 0, done: learned.length > 0,
-     run: () => cfg.elevenlabs_agent_id ? brief(pending[0]._id, false) : document.querySelector('input.reason')?.focus()},
-    {key: 4, title: 'The same $300 request again', sub: learned.length ? 'Atlas has indexed the ruling.' : 'Waits until Atlas has the ruling.', enabled: learned.length > 0, done: !!again, run: () => startRun(LATE, 'again')},
-    {key: 5, title: 'Undo the first one', sub: 'Roll back the refund that got through.', enabled: !!first && first.status === 'completed', done: !!first && first.status === 'rolled_back',
-     run: async () => { await loadRun(first._id); showRollback(await api(`/runs/${first._id}/rollback`, {by: 'human:dana'})); }},
-  ];
-}
-function renderStepper() {
-  const steps = stepperState(), next = steps.find(s => !s.done && s.enabled);
-  $('stepper').innerHTML = steps.map(s => `<button class="stepbtn ${s.done ? 'done' : ''} ${s === next ? 'next' : ''}" data-key="${s.key}" ${s.enabled ? '' : 'disabled'}>
-    <kbd>${s.done ? '✓' : s.key}</kbd><div><span>${esc(s.title)}</span><small>${esc(s.sub)}</small></div></button>`).join('');
-}
-async function runStep(key) {
-  const s = stepperState().find(s => s.key === Number(key));
-  if (s && s.enabled) { try { await s.run(); } catch (e) { notice(esc(e.message)); } }
-}
-$('stepper').onclick = ev => { const b = ev.target.closest('.stepbtn'); if (b) runStep(b.dataset.key); };
+/* ---------- events ---------- */
+$('steps').onclick = ev => {
+  if (ev.target.closest('[data-undo]')) return undo();
+  const tab = ev.target.closest('.tab');
+  if (tab && !tab.disabled) play(Number(tab.dataset.step));
+};
 document.addEventListener('keydown', ev => {
-  if (ev.target.matches('input, textarea, select') || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-  if (/^[1-5]$/.test(ev.key)) runStep(ev.key);
+  if (ev.repeat || ev.metaKey || ev.ctrlKey || ev.altKey || ev.target.matches('input, textarea, select')) return;
+  if (/^[123]$/.test(ev.key)) play(Number(ev.key));
+  if (ev.key === '4') undo();
 });
-
-/* ---------- live feed ---------- */
-const feed = new EventSource('/events');
-feed.onmessage = m => {
-  const {coll, op, doc} = JSON.parse(m.data);
-  if (!doc) return;
-  if (coll === 'ledger' && doc.run_id === runId) { entries.set(doc._id, doc); renderTimeline(doc.step); renderStats(); }
-  if (coll === 'runs') listRuns();
-  if (coll === 'approvals') { approvals.set(doc._id, doc); if (voice.id === doc._id && doc.status !== 'pending') setTimeout(endBrief, 3500); renderApprovals(); }
-  if (coll === 'precedents' && op === 'indexed') {
-    learned.push(doc); renderStepper();
-    notice(`<b style="color:var(--gold)">Learned.</b> Ruling <span class="mono">${esc(doc._id)}</span> (${esc(doc.decision)}) was embedded and indexed by Atlas${doc.seconds == null ? '' : ' in about ' + doc.seconds + ' s'}. No embedding code ran in this app.${doc.outcome_note ? ` “${esc(doc.outcome_note)}”` : ''}`);
-  }
+$('inbox').onclick = ev => {
+  const card = ev.target.closest('.review');
+  const d = ev.target.closest('button[data-d]'), v = ev.target.closest('button[data-v]'), r = ev.target.closest('button[data-run]');
+  if (r) return play(Number(r.dataset.run));
+  if (!card) return;
+  if (d) return decide(card.dataset.id, d.dataset.d);
+  if (v) return voice.id ? endBrief() : brief(card.dataset.id, v.dataset.v === 'text');
+};
+$('inbox').onkeydown = ev => {
+  if (ev.key !== 'Enter' || ev.target.id !== 'vsay' || !voice.session) return;
+  const text = ev.target.value.trim();
+  if (!text) return;
+  voice.session.sendUserMessage(text);
+  voice.lines.push({who: 'You', text}); vui.line('You', text);
+  ev.target.value = '';
+};
+$('intro-toggle').onclick = () => { introOpen = $('intro').classList.contains('compact'); render(); };
+$('reset').onclick = async () => {
+  toast('Resetting. Waiting for Atlas to drop this session\'s rulings from the search index…');
+  try { await api('/reset', {}); } catch (e) {}
+  location.reload();
+};
+$('runsel').onchange = async ev => { auditRunId = ev.target.value; if (!ledgers.has(auditRunId)) await loadLedger(auditRunId); render(); };
+$('trail').onclick = ev => {
+  const row = ev.target.closest('.t-step');
+  if (!row) return;
+  const n = Number(row.dataset.step);
+  openSteps.has(n) ? openSteps.delete(n) : openSteps.add(n);
+  render();
+};
+$('full').onclick = async () => {
+  const body = {tickets: null, label: 'full queue', pace: 0.3};
+  if (params.get('mode')) body.mode = params.get('mode');
+  const {run_id} = await api('/runs', body);
+  runs.set(run_id, {_id: run_id, label: 'full queue', status: 'running'});
+  ledgers.set(run_id, new Map()); auditRunId = run_id; $('audit').open = true; render();
+};
+$('kill').onclick = async () => {
+  const r = await api(`/runs/${auditRunId}/kill`, {by: 'human:dana', reason: 'Stopped by the reviewer'});
+  toast(`<b>Killed.</b> ${r.revoked} unused warrant(s) revoked. The agent's next call is refused.`);
+};
+$('rollback').onclick = async () => {
+  const r = await api(`/runs/${auditRunId}/rollback`, {by: 'human:dana'});
+  toast(r.ok ? `<b>Rolled back.</b> ${r.undone.length} step(s) undone, ${r.not_undone.length} cannot be undone and say so.` : esc(r.error));
+};
+$('verify').onclick = async () => {
+  const v = await api(`/runs/${auditRunId}/verify`);
+  toast(v.ok ? `<b>Ledger intact.</b> ${v.entries} entries, chain head ${esc(v.head.slice(0, 16))}…` : `<b>Ledger altered at entry ${v.broken_at}.</b> ${esc(v.why)}`);
 };
 
-async function loadScoreboard() {
-  const r = await api('/scoreboard');
-  if (!r.arms) return;
-  const [none, gate, after] = r.arms, at = new Date(r.ran_at).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
-  $('redteam').hidden = false;
-  $('rt-sub').textContent = `${r.attacks} attacks, scored by hidden checks`;
-  $('rt').innerHTML = `<div class="arm bad"><b>${none.attacks_executed}</b><span>no gate</span></div><span class="to">→</span>
-    <div class="arm mid"><b>${gate.attacks_executed}</b><span>Warrant</span></div><span class="to">→</span>
-    <div class="arm good"><b>${after.attacks_executed}</b><span>after one human ruling</span></div>
-    <p>Attacks that executed, out of ${r.attacks}. Legitimate work completed: ${after.legit_completed} of ${r.legit} in every arm. No policy was edited between the last two. <span class="muted">Run at ${esc(at)} on commit ${esc(r.commit)}.</span></p>
-    ${r.model_baseline ? `<p><b>${esc(r.model_baseline.model)} alone</b>, rules in its prompt, no gate: broke a written rule in ${r.model_baseline.written_rule_runs_violated} of ${r.model_baseline.written_rule_runs} runs, and paid out in ${r.model_baseline.unwritten_runs_violated} of ${r.model_baseline.unwritten_runs} where no rule was written.</p>` : ''}`;
+/* ---------- live feed from Atlas change streams ---------- */
+function connectFeed() {
+  const feed = new EventSource('/events');
+  feed.onmessage = m => {
+    const {coll, op, doc} = JSON.parse(m.data);
+    if (!doc) return;
+    feedEvents++;
+    if (coll === 'ledger') { if (!ledgers.has(doc.run_id)) ledgers.set(doc.run_id, new Map()); ledgers.get(doc.run_id).set(doc._id, doc); }
+    if (coll === 'runs') runs.set(doc._id, {...(runs.get(doc._id) || {}), ...doc});
+    if (coll === 'approvals') { approvals.set(doc._id, doc); if (voice.id === doc._id && doc.status !== 'pending') setTimeout(endBrief, 2200); }
+    if (coll === 'precedents' && op === 'indexed') learned = learned.filter(l => l._id !== doc._id).concat(doc);
+    render();
+  };
 }
 
 (async () => {
-  loadScoreboard();
-  cfg = await api('/config');
-  (await api('/tickets')).forEach(t => tickets.set(t._id, t));
-  learned = await api('/precedents/learned');
-  const list = await listRuns();
-  if (list.length) await loadRun(list[0]._id); else renderStepper();
+  buildTiles();
+  [cfg, score] = await Promise.all([api('/config'), api('/scoreboard')]);
+  const [ts, ps, ls, rs, as] = await Promise.all([api('/tickets'), api('/policies'), api('/precedents/learned'), api('/runs'), api('/approvals?status=all')]);
+  ts.forEach(t => tickets.set(t._id, t)); ps.forEach(p => policies.set(p._id, p)); learned = ls;
+  rs.forEach(r => runs.set(r._id, r)); as.forEach(a => approvals.set(a._id, a));
+  const need = new Set(DEMO.map(s => runFor(s.label)?._id).filter(Boolean));
+  auditRunId = [...runs.keys()].sort().pop() || null;
+  if (auditRunId) need.add(auditRunId);
+  await Promise.all([...need].map(loadLedger));
+  viewStep = latestStep();
+  renderScore(); render(); connectFeed();
 })();
 </script>
 </body>
