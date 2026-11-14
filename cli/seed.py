@@ -52,7 +52,7 @@ POLICIES = [
     _p("P-007", "deny", "payments.refund", "At most $3,000 refunded per run (computed from the ledger)",
        [_c("history.run_refund_total_after_cents", "gt", 300000)]),
     _p("P-009", "step_up", "payments.refund", "Resembles a request a human refused before (precedent search)",
-       [_c("precedent.denied_match", "eq", True)], params={"min_score": 0.75}),
+       [_c("precedent.denied_match", "eq", True)], params={"min_score": 0.75, "min_margin": 0.1}),
     _p("P-010", "allow", "crm.update_contact", "Update a customer record in the agent's regions",
        [_c("resource.region", "in", REF_REGIONS)]),
     _p("P-011", "allow", "email.send", "Email a customer in the agent's regions",
@@ -196,7 +196,18 @@ def reset(db) -> None:
     for name, docs in FIXTURES.items():
         db[name].delete_many({})
         db[name].insert_many([dict(d) for d in docs])
-    have = set(db.precedents.distinct("_id"))
-    missing = [p for p in precedents() if p["_id"] not in have]
-    if missing:
-        db.precedents.insert_many(missing)
+    have = {p["_id"]: p for p in db.precedents.find({"seeded": True}, {"summary": 1})}
+    changed = []
+    for p in precedents():
+        if p["_id"] not in have:
+            db.precedents.insert_one(p)
+            changed.append(p)
+        elif have[p["_id"]]["summary"] != p["summary"]:  # the text Atlas embeds changed, so it re-embeds
+            db.precedents.update_one({"_id": p["_id"]}, {"$set": {"summary": p["summary"]}})
+            changed.append(p)
+    if changed:
+        from gateway.precedents import wait_until_searchable
+        try:
+            wait_until_searchable(db, changed[-1], timeout=60)
+        except Exception:
+            pass

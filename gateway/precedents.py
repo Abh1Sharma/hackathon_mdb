@@ -23,22 +23,20 @@ def money(cents: int) -> str:
 
 def summary(tool: str, amount_cents: int | None = None, region: str | None = None,
             reason: str = "", note: str = "") -> str:
-    """Deterministic one-paragraph description of a request. This is the text Atlas embeds.
+    """The basis of a request: the agent's stated reason and the untrusted text behind it.
 
-    It describes only what was asked and on what basis, never the outcome, so a new
-    request and a past one are compared like for like.
+    This is the text Atlas embeds and the text a new request is compared with. Tool, amount
+    and region are deliberately left out. They are structured fields (the tool is a filter),
+    and when they were part of the text a plain $480 credit looked like a refused $480 request
+    just because the amounts matched. The outcome is left out too, so requests are compared
+    like for like.
     """
-    head = tool
-    if amount_cents:
-        head += f" of {money(amount_cents)}"
-    if region:
-        head += f" for an order in {region}"
-    parts = [head + "."]
+    parts = []
     if reason:
         parts.append(f"Agent reason: {reason}")
     if note:
         parts.append(f"Customer note: {note}")
-    return " ".join(parts)
+    return " ".join(parts) or f"{tool} request with no stated basis"
 
 
 def pipeline(text: str, tool: str | None = None, k: int = 3, rerank: bool = True, candidates: int = 10) -> list:
@@ -93,16 +91,25 @@ def search(db, text: str, tool: str | None = None, k: int = 3) -> dict:
     return {"mode": "fusion", "hits": hits, "ms": int((time.time() - t0) * 1000)}
 
 
-def facts(result: dict, min_score: float) -> dict:
-    """What policy sees. `denied_match` is the only field that can change a decision."""
-    if not result["hits"]:
-        return {"nearest_decision": None, "denied_match": False, "mode": result["mode"], "ms": result["ms"]}
-    top = result["hits"][0]
+def facts(result: dict, min_score: float, min_margin: float = 0.1) -> dict:
+    """What policy sees. `denied_match` is the only field that can change a decision.
+
+    A request resembles a refusal only if the closest precedent is a denial, its rerank score
+    clears `min_score`, and it beats the closest approved precedent by `min_margin`. The last
+    condition keeps a request that looks equally like an approval from being escalated.
+    """
+    base = {"mode": result["mode"], "ms": result["ms"], "min_score": min_score, "min_margin": min_margin}
+    hits = result["hits"]
+    if not hits:
+        return {**base, "nearest_decision": None, "denied_match": False}
+    top = hits[0]
     score = top.get("rerank_score")
+    approved = [h["rerank_score"] for h in hits if h["decision"] == "approved" and "rerank_score" in h]
+    margin = round(score - max(approved), 4) if score is not None and approved else None
     confident = score is None or score >= min_score  # fusion mode has no calibrated score, so rank decides
-    return {"nearest_id": top["_id"], "nearest_decision": top["decision"], "score": score,
-            "mode": result["mode"], "min_score": min_score, "ms": result["ms"],
-            "denied_match": top["decision"] == "denied" and confident}
+    clear = margin is None or margin >= min_margin
+    return {**base, "nearest_id": top["_id"], "nearest_decision": top["decision"], "score": score,
+            "margin": margin, "denied_match": top["decision"] == "denied" and confident and clear}
 
 
 def refs(result: dict) -> list:

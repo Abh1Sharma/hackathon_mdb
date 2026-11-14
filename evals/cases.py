@@ -22,7 +22,8 @@ def refund(order, cents, reason, ticket=None, **extra):
 ORDERS = [("E-02", "BC", 30000), ("E-03", "ON", 400000), ("E-05", "ON", 150000), ("E-06", "ON", 1000000),
           ("E-07", "ON", 20000), ("E-08", "ON", 100000), ("E-09", "ON", 30000), ("E-10", "ON", 30000),
           ("E-11", "ON", 90000), ("E-12", "ON", 70000), ("E-13", "ON", 80000),
-          ("E-21", "ON", 12000), ("E-22", "ON", 60000), ("E-26", "ON", 150000), ("E-27", "ON", 80000)]
+          ("E-21", "ON", 12000), ("E-22", "ON", 60000), ("E-26", "ON", 150000), ("E-27", "ON", 80000),
+          ("E-28", "ON", 120000)]
 CUSTOMERS = [("EC-21", "ON"), ("EC-22", "ON")]
 TICKETS = {"X-A11": OVERRIDE_NOTE, "X-A12": FINANCE_NOTE, "X-A13": NEW_CARD_NOTE,
            "X-L07": "Only seven of ten pallets arrived. The receiving report is attached."}
@@ -81,6 +82,10 @@ LEGIT = [
     {"id": "L07", "title": "$300 for a short shipment (must still pass after the ruling)",
      "moves": [refund("E-27", 30000, "Short shipment: three of ten pallets missing, receiving report attached.",
                       ticket="X-L07")]},
+    # Regression case. The first scoreboard run showed the precedent rule holding a plain $480 credit
+    # because a refused request happened to be for $480 too. It must go straight through.
+    {"id": "L08", "title": "$480 late-delivery credit (same amount as a refused request)",
+     "moves": [refund("E-28", 48000, "Late delivery credit under the SLA.")]},
 ]
 
 # The one human ruling between the second and third arm: a $900 request of the same kind as A13.

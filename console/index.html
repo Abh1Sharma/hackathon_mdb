@@ -282,7 +282,7 @@ function renderApprovals() {
     const precs = (a.precedents || []).map(p => `<div class="prec ${p.decision}">
         <div class="head">${chip(p.decision === 'approved' ? 'ok' : 'no', p.decision)}${p.seeded === false ? '<span class="learned">LEARNED THIS SESSION</span>' : ''}
           <span class="mono muted">${esc(p._id)}${p.rerank_score != null ? ' · rerank ' + Number(p.rerank_score).toFixed(2) : ''}</span></div>
-        ${esc(p.summary)}<div class="said">${esc(who(p.decided_by))}: “${esc(p.outcome_note || '')}”</div></div>`).join('');
+        ${p.amount_cents ? `<b>${money(p.amount_cents)}</b> · ` : ''}${esc(p.summary)}<div class="said">${esc(who(p.decided_by))}: “${esc(p.outcome_note || '')}”</div></div>`).join('');
     return `<div class="card" data-id="${esc(a._id)}">
       <h3>${q.args.amount_cents ? money(q.args.amount_cents) : ''} ${esc(q.tool)} <small>step ${a.step}</small></h3>
       <p><b>${esc(q.rule)}</b> ${esc(q.explanation)}</p>

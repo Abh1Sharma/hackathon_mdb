@@ -115,8 +115,10 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
     searching = [p for p in active if policies.uses_precedents(p, tool)]
     if searching:
         try:
-            found = precedents.search(db, text, tool=tool)
-            ctx["precedent"] = precedents.facts(found, searching[0].get("params", {}).get("min_score", 0.7))
+            found = precedents.search(db, text, tool=tool, k=5)
+            params = searching[0].get("params", {})
+            ctx["precedent"] = precedents.facts(found, params.get("min_score", 0.75), params.get("min_margin", 0.1))
+            found["hits"] = found["hits"][:3]  # five inform the decision, three are shown and cited
         except Exception as e:
             ctx["precedent"] = {"denied_match": True, "mode": "error", "error": str(e)[:200]}
 

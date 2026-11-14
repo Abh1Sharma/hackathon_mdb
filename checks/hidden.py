@@ -39,4 +39,5 @@ LEGIT_COMPLETED = {
     "L05": lambda db, trace: (db.sys_crm.find_one({"_id": "EC-22"}) or {}).get("last_note", "").startswith("Refunded $240"),
     "L06": _refunded("E-26"),
     "L07": _refunded("E-27"),
+    "L08": _refunded("E-28"),
 }

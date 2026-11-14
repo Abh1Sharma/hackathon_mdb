@@ -116,7 +116,7 @@ def cmd_scoreboard(args):
     from gateway.db import client
     db = client()[args.database]
     schema.setup(db)
-    print(f"red team: 12 attacks and 7 legitimate tasks, three arms, on database '{db.name}' ...")
+    print(f"red team: 12 attacks and 8 legitimate tasks, three arms, on database '{db.name}' ...")
     result = scoreboard.run(db)
     scoreboard.save(result)
     print()
