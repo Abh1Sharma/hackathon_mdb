@@ -32,6 +32,82 @@ def cmd_precedents(args):
         print(f"  {h['_id']}  {h['decision']:<8}  rerank {rerank}  fusion {h['fusion_score']:.4f}  {h['summary'][:110]}")
 
 
+def _run_id(db, given):
+    if given:
+        return given
+    latest = db.runs.find_one(sort=[("started_at", -1)])
+    if not latest:
+        raise SystemExit("no runs yet")
+    return latest["_id"]
+
+
+def cmd_replay(args):
+    from gateway import control
+    db = get_db()
+    account = control.reconstruct(db, _run_id(db, args.run_id))
+    run = account["run"]
+    print(f"run {run['_id']}   {run['agent_id']} on behalf of {run['on_behalf_of']}   status: {run['status']}")
+    print(f"goal: {run['goal']}\n")
+    for s in account["steps"]:
+        policies = ", ".join(s["policies"]) or s.get("rule", "-")
+        print(f"step {s['step']:>2}  {s['tool'] or '-':<20} {str(s['decision']).upper():<8} {policies:<18} "
+              f"{s['result']:<13} verified={s['verified']}")
+        print(f"         who: {s['who']} for {s['on_behalf_of']}   why: {s['why']}")
+        for p in s["precedents"][:1]:
+            print(f"         nearest precedent: {p['id']} ({p['decision']}, score {p['score']})")
+        if "approval" in s:
+            a = s["approval"]
+            print(f"         human: {a['decision']} by {a['by']} via {a['channel']}" + (f'  "{a["note"]}"' if a["note"] else ""))
+        for v in s.get("violations", []):
+            print(f"         violation: {v['code']}" + (f" ({v['why']})" if v["why"] else ""))
+        if "rollback" in s:
+            r = s["rollback"]
+            print(f"         rollback by {r['by']}: " + (f"undone, {r['how']}" if r["undone"] else r["follow_up"]))
+    for c in account["controls"]:
+        print(f"\nKILL by {c['by']}: {c['reason']}  ({c['warrants_revoked']} warrants revoked)")
+    chain = account["chain"]
+    print("\nchain: " + (f"intact, {chain['entries']} entries, head {chain['head'][:16]}..." if chain["ok"]
+                          else f"BROKEN at entry {chain['broken_at']}: {chain['why']}"))
+
+
+def cmd_verify(args):
+    from gateway import ledger
+    db = get_db()
+    run_id = _run_id(db, args.run_id)
+    result = ledger.verify(db, run_id)
+    if result["ok"]:
+        print(f"{run_id}: chain intact, {result['entries']} entries, head {result['head']}")
+    else:
+        print(f"{run_id}: chain BROKEN at entry {result['broken_at']}: {result['why']}")
+        raise SystemExit(1)
+
+
+def cmd_demo(args):
+    import os
+    import threading
+    import urllib.request
+
+    import uvicorn
+    db = get_db()
+    if not args.keep:
+        seed.reset(db)
+    os.environ["WARRANT_AGENT_MODE"] = "scripted" if args.scripted else "live"
+    url = f"http://127.0.0.1:{args.port}"
+    print(f"database: {db.name} on the Atlas sandbox   search indexes: {schema.search_status(db)}")
+    print(f"agent mode: {os.environ['WARRANT_AGENT_MODE']}\nconsole: {url}\n")
+    if args.go:
+        def kick():
+            request = urllib.request.Request(f"{url}/runs", data=b"{}", headers={"Content-Type": "application/json"})
+            for _ in range(40):
+                try:
+                    urllib.request.urlopen(request, timeout=5)
+                    return
+                except OSError:
+                    time.sleep(0.25)
+        threading.Thread(target=kick, daemon=True).start()
+    uvicorn.run("control.api:app", host="127.0.0.1", port=args.port, log_level="warning")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="warrant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -42,6 +118,18 @@ def main():
     p.add_argument("--tool")
     p.add_argument("-k", type=int, default=3)
     p.set_defaults(fn=cmd_precedents)
+    p = sub.add_parser("replay", help="print the reconstruction of a run (default: the latest)")
+    p.add_argument("run_id", nargs="?")
+    p.set_defaults(fn=cmd_replay)
+    p = sub.add_parser("verify", help="check the hash chain of a run (default: the latest)")
+    p.add_argument("run_id", nargs="?")
+    p.set_defaults(fn=cmd_verify)
+    p = sub.add_parser("demo", help="reset, start the control API and console, run the agent from the console")
+    p.add_argument("--scripted", action="store_true", help="scripted agent, no model calls")
+    p.add_argument("--go", action="store_true", help="start a run immediately instead of from the console")
+    p.add_argument("--keep", action="store_true", help="do not reset first")
+    p.add_argument("--port", type=int, default=8000)
+    p.set_defaults(fn=cmd_demo)
     args = parser.parse_args()
     args.fn(args)
 

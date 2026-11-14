@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Warrant reviewer console</title>
+<style>
+  :root { --bg:#0e1512; --panel:#15201b; --line:#24342c; --text:#e6efe9; --dim:#8ea398; --green:#3ddc84;
+          --red:#ff6b6b; --amber:#ffc24b; --blue:#6cb6ff; --violet:#b69cff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  h1 { font-size:16px; margin:0; letter-spacing:.02em; }
+  h1 small { color:var(--dim); font-weight:400; margin-left:8px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:0 0 10px; }
+  .spacer { flex:1; }
+  button { font:inherit; color:var(--text); background:#1d2b24; border:1px solid var(--line); border-radius:6px; padding:7px 12px; cursor:pointer; }
+  button:hover { border-color:var(--dim); }
+  button:disabled { opacity:.4; cursor:default; }
+  button.kill { background:#3a1616; border-color:#7a2b2b; color:#ffb3b3; font-weight:600; }
+  button.go { background:#123222; border-color:#1f6b45; color:#aef5cd; font-weight:600; }
+  main { display:grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap:16px; padding:16px 18px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; min-width:0; }
+  .status { padding:3px 9px; border-radius:99px; font-size:12px; border:1px solid var(--line); }
+  .s-running { color:var(--green); border-color:#1f6b45; } .s-killed { color:var(--red); border-color:#7a2b2b; }
+  .s-rolled_back { color:var(--violet); } .s-completed { color:var(--blue); }
+  #runid, .mono { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+  #runid { color:var(--dim); }
+  .row { display:grid; grid-template-columns: 38px 96px 34px 150px minmax(0,1fr); gap:8px; padding:6px 4px; border-bottom:1px solid #1b2a23; cursor:pointer; align-items:baseline; }
+  .row:hover { background:#192720; }
+  .row.new { animation: flash 1.2s ease-out; }
+  @keyframes flash { from { background:#20402f; } to { background:transparent; } }
+  .seq, .step { color:var(--dim); font-variant-numeric: tabular-nums; }
+  .badge { font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid var(--line); white-space:nowrap; text-align:center; }
+  .b-allow { color:var(--green); border-color:#1f6b45; } .b-deny, .b-violation, .b-kill { color:var(--red); border-color:#7a2b2b; }
+  .b-step_up { color:var(--amber); border-color:#7a5a1c; } .b-execution, .b-verification { color:var(--blue); }
+  .b-approval { color:var(--amber); } .b-rollback { color:var(--violet); }
+  .what { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#c9d8cf; }
+  .tool { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #timeline { max-height: calc(100vh - 190px); overflow:auto; }
+  .card { border:1px solid #7a5a1c; border-radius:8px; padding:12px; margin-bottom:12px; background:#1b2219; }
+  .card h3 { margin:0 0 4px; font-size:14px; }
+  .card p { margin:4px 0; color:#c9d8cf; }
+  .prec { border-left:3px solid var(--line); padding:4px 8px; margin:6px 0; font-size:12.5px; }
+  .prec.approved { border-color:var(--green); } .prec.denied { border-color:var(--red); }
+  .prec b.approved { color:var(--green); } .prec b.denied { color:var(--red); }
+  .dim { color:var(--dim); }
+  input[type=text] { width:100%; font:inherit; background:#0f1814; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:7px 9px; margin:8px 0; }
+  .actions { display:flex; gap:8px; }
+  pre { white-space:pre-wrap; word-break:break-word; background:#0f1814; border:1px solid var(--line); border-radius:8px; padding:10px; font-size:12px; max-height:340px; overflow:auto; margin:0; }
+  .empty { color:var(--dim); padding:8px 4px; }
+  #report div { margin:3px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Warrant <small>no agent action without a warrant</small></h1>
+  <span id="status" class="status">no run</span>
+  <span id="runid"></span>
+  <span class="spacer"></span>
+  <button class="go" id="start">Start run</button>
+  <button class="kill" id="kill" disabled>Kill</button>
+  <button id="rollback" disabled>Rollback</button>
+  <button id="verify" disabled>Verify chain</button>
+  <button id="reset">Reset</button>
+</header>
+<main>
+  <section>
+    <h2>Ledger, live from Atlas change streams</h2>
+    <div id="timeline"><div class="empty">Start a run. Every decision, execution and control action appears here as it is written.</div></div>
+  </section>
+  <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+    <section>
+      <h2>Waiting for a human</h2>
+      <div id="approvals"><div class="empty">Nothing is waiting.</div></div>
+    </section>
+    <section>
+      <h2>Report</h2>
+      <div id="report" class="empty">Kill, rollback and chain verification results appear here.</div>
+    </section>
+    <section>
+      <h2>Entry detail</h2>
+      <pre id="detail">Click a ledger entry.</pre>
+    </section>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const money = c => '$' + (c / 100).toLocaleString('en-US', {maximumFractionDigits: 0});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let runId = null, entries = new Map(), approvals = new Map();
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || r.statusText);
+  return data;
+}
+
+function describe(e) {
+  const p = e.payload || {};
+  if (e.type === 'decision') {
+    const refs = (e.policy_refs || []).map(r => `${r.id} v${r.version}`).join(', ') || p.rule;
+    const prec = p.precedent && p.precedent.denied_match ? `  ·  resembles ${p.precedent.nearest_id} (denied, ${Number(p.precedent.score ?? 0).toFixed(2)})` : '';
+    return `${refs}${prec}  ·  ${e.reason || ''}`;
+  }
+  if (e.type === 'execution') return p.ok ? `executed${p.result_id ? ' → ' + p.result_id : ''}` : `failed: ${p.error}`;
+  if (e.type === 'verification') return `verified: ${p.verified}  ·  ${p.detail}`;
+  if (e.type === 'approval') return `${p.decision} by ${e.actor} via ${p.channel}${e.reason ? '  ·  “' + e.reason + '”' : ''}`;
+  if (e.type === 'kill') return `by ${e.actor}: ${e.reason}  ·  ${p.warrants_revoked} warrant(s) revoked`;
+  if (e.type === 'rollback') return p.undone ? `undone: ${p.compensation}` : `${p.follow_up}`;
+  if (e.type === 'violation') return `${p.code}${p.why ? ': ' + p.why : ''}`;
+  return '';
+}
+
+function renderTimeline(flashId) {
+  const list = [...entries.values()].sort((a, b) => a.seq - b.seq);
+  if (!list.length) return;
+  $('timeline').innerHTML = list.map(e => {
+    const kind = e.type === 'decision' ? e.decision : e.type;
+    return `<div class="row ${e._id === flashId ? 'new' : ''}" data-id="${esc(e._id)}">
+      <span class="seq">${e.seq}</span><span class="badge b-${kind}">${kind.replace('_', '-')}</span>
+      <span class="step">${e.step ?? ''}</span><span class="tool mono">${esc(e.tool || '')}</span>
+      <span class="what" title="${esc(describe(e))}">${esc(describe(e))}</span></div>`;
+  }).join('');
+  if (flashId) $('timeline').scrollTop = $('timeline').scrollHeight;
+}
+
+function renderApprovals() {
+  const pending = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId);
+  if (!pending.length) { $('approvals').innerHTML = '<div class="empty">Nothing is waiting.</div>'; return; }
+  $('approvals').innerHTML = pending.map(a => {
+    const q = a.request;
+    const precs = (a.precedents || []).map(p => `<div class="prec ${p.decision}">
+        <b class="${p.decision}">${p.decision}</b> <span class="dim mono">${esc(p._id)} · ${a.precedent_mode === 'rerank' ? 'rerank ' + Number(p.rerank_score).toFixed(2) : 'fused'}</span><br>
+        ${esc(p.summary)}<br><span class="dim">${esc(p.decided_by || '')}: ${esc(p.outcome_note || '')}</span></div>`).join('');
+    return `<div class="card" data-id="${esc(a._id)}">
+      <h3>${esc(q.tool)} ${q.args.amount_cents ? money(q.args.amount_cents) : ''} <span class="dim">step ${a.step}</span></h3>
+      <p><b>${esc(q.rule)}</b>: ${esc(q.explanation)}</p>
+      <p class="dim">${esc(q.agent_id)} on behalf of ${esc(q.on_behalf_of)}</p>
+      <p>Agent reason: ${esc(q.reason)}</p>${q.note ? `<p>Customer note: <i>${esc(q.note)}</i></p>` : ''}
+      <h2 style="margin-top:12px">Closest precedents (Atlas hybrid search, reranked)</h2>${precs || '<div class="empty">none</div>'}
+      <input type="text" placeholder="Your reason (becomes part of the precedent)">
+      <div class="actions"><button class="go" data-d="approved">Approve</button><button class="kill" data-d="denied">Deny</button></div></div>`;
+  }).join('');
+}
+
+function setRun(run) {
+  if (!run) return;
+  runId = run._id;
+  $('runid').textContent = run._id;
+  $('status').textContent = run.status.replace('_', ' ');
+  $('status').className = 'status s-' + run.status;
+  $('kill').disabled = run.status !== 'running';
+  $('rollback').disabled = !['killed', 'completed'].includes(run.status);
+  $('verify').disabled = false;
+}
+
+function report(html) { $('report').className = ''; $('report').innerHTML = html; }
+
+async function loadRun(id) {
+  entries.clear();
+  setRun(await api(`/runs/${id}`));
+  (await api(`/runs/${id}/ledger`)).forEach(e => entries.set(e._id, e));
+  (await api('/approvals?status=pending')).forEach(a => approvals.set(a._id, a));
+  renderTimeline(); renderApprovals();
+}
+
+$('start').onclick = async () => {
+  entries.clear(); $('timeline').innerHTML = '<div class="empty">Starting…</div>';
+  report('<span class="dim">Run started.</span>');
+  const mode = new URLSearchParams(location.search).get('mode');
+  const pace = Number(new URLSearchParams(location.search).get('pace') || 1.5);
+  const {run_id} = await api('/runs', mode ? {mode, pace} : {pace});
+  await loadRun(run_id);
+};
+$('kill').onclick = async () => {
+  const r = await api(`/runs/${runId}/kill`, {by: 'human:dana', reason: 'Stopped by reviewer from the console'});
+  report(`<div><b>Killed.</b> ${r.revoked} unused warrant(s) revoked, ${r.approvals_cancelled || 0} pending approval(s) cancelled. The agent's next call is refused.</div>`);
+};
+$('rollback').onclick = async () => {
+  const r = await api(`/runs/${runId}/rollback`, {by: 'human:dana'});
+  if (!r.ok) return report(`<div>${esc(r.error)}</div>`);
+  report(`<div><b>Rolled back.</b></div>` +
+    r.undone.map(u => `<div>✓ step ${u.step} ${esc(u.tool)}: ${esc(u.compensation)}${u.amount_cents ? ' (' + money(u.amount_cents) + ')' : ''}</div>`).join('') +
+    r.not_undone.map(u => `<div style="color:var(--amber)">✗ step ${u.step} ${esc(u.tool)}: ${esc(u.follow_up)}</div>`).join(''));
+};
+$('verify').onclick = async () => {
+  const v = await api(`/runs/${runId}/verify`);
+  report(v.ok ? `<div><b style="color:var(--green)">Chain intact.</b> ${v.entries} entries, head <span class="mono">${v.head.slice(0, 16)}…</span></div>`
+              : `<div><b style="color:var(--red)">Chain broken at entry ${v.broken_at}.</b> ${esc(v.why)}</div>`);
+};
+$('reset').onclick = async () => { await api('/reset', {}); location.reload(); };
+$('timeline').onclick = ev => {
+  const row = ev.target.closest('.row');
+  if (row) $('detail').textContent = JSON.stringify(entries.get(row.dataset.id), null, 2);
+};
+$('approvals').onclick = async ev => {
+  const button = ev.target.closest('button[data-d]');
+  if (!button) return;
+  const card = button.closest('.card');
+  try {
+    await api(`/approvals/${card.dataset.id}/decision`, {approver: 'human:sam', decision: button.dataset.d, channel: 'web', note: card.querySelector('input').value});
+  } catch (e) { report(`<div>${esc(e.message)}</div>`); }
+};
+
+const feed = new EventSource('/events');
+feed.onmessage = m => {
+  const {coll, doc} = JSON.parse(m.data);
+  if (!doc) return;
+  if (coll === 'ledger' && doc.run_id === runId) { entries.set(doc._id, doc); renderTimeline(doc._id); }
+  if (coll === 'runs' && doc._id === runId) setRun(doc);
+  if (coll === 'approvals') { approvals.set(doc._id, doc); renderApprovals(); }
+};
+
+api('/runs').then(list => list.length && loadRun(list[0]._id));
+</script>
+</body>
+</html>

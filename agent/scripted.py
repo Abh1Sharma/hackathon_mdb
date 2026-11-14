@@ -32,34 +32,17 @@ def plan(ticket: dict) -> dict:
             "reason": reason}
 
 
-def wait_for_decisions(db, approval_ids: list, seconds: float) -> dict:
-    """Block until humans decide, using a change stream on approvals (no polling)."""
-    waiting, decided = set(approval_ids), {}
-    deadline = time.time() + seconds
-    pipeline = [{"$match": {"documentKey._id": {"$in": approval_ids}}}]
-    with db.approvals.watch(pipeline, full_document="updateLookup", max_await_time_ms=500) as stream:
-        for a in db.approvals.find({"_id": {"$in": approval_ids}, "status": {"$ne": "pending"}}):
-            decided[a["_id"]] = a["status"]
-            waiting.discard(a["_id"])
-        while waiting and time.time() < deadline:
-            event = stream.try_next()
-            doc = (event or {}).get("fullDocument")
-            if doc and doc["status"] != "pending":
-                decided[doc["_id"]] = doc["status"]
-                waiting.discard(doc["_id"])
-    return decided
-
-
 def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds: float = 0,
               pace: float = 0, run=None) -> dict:
     killswitch.start(db)
     run = run or runs.start(db, seed.AGENT_ID, "Process today's refund queue")
     say(f"run {run['_id']} started by {seed.AGENT_ID} on behalf of {run['on_behalf_of']}")
     counter = 0
-    outcomes, paused = {}, []
+    outcomes, paused = {}, {}  # paused: approval_id -> (ticket, action, first refusal)
+    killed = False
 
     def call(tool, args, reason, step=None):
-        nonlocal counter
+        nonlocal counter, killed
         if step is None:
             counter += 1
             step = counter
@@ -70,54 +53,76 @@ def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds
             say(f"  [{step}] {tool:<18} ALLOWED          verified={out['verified']}")
         else:
             say(f"  [{step}] {tool:<18} {out['code']:<16} {out['rule']}: {out['explanation']}")
+            killed = killed or out["code"] == "KILLED"
         return {**out, "step": step}
 
     def notify(ticket, action):
         amount = money(action["args"]["amount_cents"])
-        return call("email.send", {"customer_id": ticket["customer_id"], "subject": f"Your refund of {amount}",
-                                   "body": f"We have refunded {amount} for order {ticket['order_id']}."},
-                    f"Tell the customer about the refund for ticket {ticket['_id']}")
+        call("email.send", {"customer_id": ticket["customer_id"], "subject": f"Your refund of {amount}",
+                            "body": f"We have refunded {amount} for order {ticket['order_id']}."},
+             f"Tell the customer about the refund for ticket {ticket['_id']}")
 
-    def was_killed(out):
-        return not out["ok"] and out["code"] == "KILLED"
+    def resume(approval: dict):
+        """A human decided a paused step. If approved, retry the same step: its warrant is waiting."""
+        ticket, action, first = paused.pop(approval["_id"])
+        say(f"ticket {ticket['_id']}: human decision on step {first['step']} is {approval['status']}")
+        if approval["status"] == "denied":
+            return
+        # Approved: the warrant is waiting. Expired: the request was cancelled (for example by a kill),
+        # and checking back on the step is refused, which the ledger records.
+        done = call(action["tool"], action["args"], action["reason"], step=first["step"])
+        outcomes[ticket["_id"]] = done
+        if done["ok"]:
+            notify(ticket, action)
 
-    killed = False
+    def resume_decided():
+        if paused:
+            for approval in db.approvals.find({"_id": {"$in": list(paused)}, "status": {"$ne": "pending"}}):
+                if not killed:
+                    resume(approval)
+
     tickets = list(db.sys_tickets.find({"_id": {"$in": ticket_ids}} if ticket_ids else {}).sort("_id", 1))
     for ticket in tickets:
+        resume_decided()
+        if killed:
+            break
         say(f"ticket {ticket['_id']}: {ticket['issue']}")
         looked = call("orders.get", {"order_id": ticket["order_id"]}, f"Look up the order for ticket {ticket['_id']}")
         if not looked["ok"]:
             outcomes[ticket["_id"]] = looked
-            if was_killed(looked):
-                killed = True
+            if killed:
                 break
             continue  # read the refusal and move on, never loop
         action = plan(ticket)
         done = call(action["tool"], action["args"], action["reason"])
         outcomes[ticket["_id"]] = done
-        if was_killed(done):
-            killed = True
+        if killed:
             break
         if not done["ok"] and done["code"] == "STEP_UP_PENDING":
-            paused.append((ticket, action, done))
+            paused[done["approval_id"]] = (ticket, action, done)
         elif done["ok"] and action["tool"] == "payments.refund":
-            if was_killed(notify(ticket, action)):
-                killed = True
+            notify(ticket, action)
+            if killed:
                 break
 
     if paused and wait_seconds and not killed:
-        say(f"waiting up to {wait_seconds:.0f}s for a human on steps {[d['step'] for _, _, d in paused]}")
-        decided = wait_for_decisions(db, [d["approval_id"] for _, _, d in paused], wait_seconds)
-        for ticket, action, first in paused:
-            status = decided.get(first["approval_id"], "pending")
-            say(f"ticket {ticket['_id']}: human decision is {status}")
-            if status != "approved":
-                continue
-            done = call(action["tool"], action["args"], action["reason"], step=first["step"])  # same step, same warrant
-            outcomes[ticket["_id"]] = done
-            if was_killed(done) or (done["ok"] and was_killed(notify(ticket, action))):
-                killed = True
-                break
+        # Wait for humans on a change stream, no polling. Each decision is handled as it arrives.
+        say(f"waiting up to {wait_seconds:.0f}s for a human on steps {sorted(f['step'] for _, _, f in paused.values())}")
+        deadline = time.time() + wait_seconds
+        pipeline = [{"$match": {"documentKey._id": {"$in": list(paused)}}}]
+        with db.approvals.watch(pipeline, full_document="updateLookup", max_await_time_ms=500) as stream:
+            resume_decided()
+            while paused and not killed and time.time() < deadline:
+                if killswitch.is_killed(run["_id"]):
+                    # The run was stopped while we waited. Checking back on a paused step is refused.
+                    ticket, action, first = next(iter(paused.values()))
+                    call(action["tool"], action["args"], action["reason"], step=first["step"])
+                    break
+                event = stream.try_next()
+                doc = (event or {}).get("fullDocument")
+                if doc and doc["status"] != "pending" and doc["_id"] in paused:
+                    resume(doc)
     if not killed:
         runs.finish(db, run["_id"])
+    say(f"run {run['_id']} {'stopped: killed by a reviewer' if killed else 'finished'}")
     return {"run_id": run["_id"], "outcomes": outcomes, "steps": counter, "killed": killed}
