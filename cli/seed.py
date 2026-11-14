@@ -52,7 +52,7 @@ POLICIES = [
     _p("P-007", "deny", "payments.refund", "At most $3,000 refunded per run (computed from the ledger)",
        [_c("history.run_refund_total_after_cents", "gt", 300000)]),
     _p("P-009", "step_up", "payments.refund", "Resembles a request a human refused before (precedent search)",
-       [_c("precedent.denied_match", "eq", True)], params={"min_score": 0.7}),
+       [_c("precedent.denied_match", "eq", True)], params={"min_score": 0.75}),
     _p("P-010", "allow", "crm.update_contact", "Update a customer record in the agent's regions",
        [_c("resource.region", "in", REF_REGIONS)]),
     _p("P-011", "allow", "email.send", "Email a customer in the agent's regions",
@@ -176,11 +176,23 @@ FIXTURES = {"identities": IDENTITIES, "policies": POLICIES, "sys_orders": ORDERS
             "sys_tickets": TICKETS}
 
 
+DEMO_QUEUE = ["T1", "T4", "T5", "T7"]  # allowed, refused by region, injected transfer refused, needs a human
+LATE_TICKET = ["T8"]
+
+
 def reset(db) -> None:
     """Back to a freshly seeded state. Keeps collections, validators, indexes and seeded precedents."""
+    from gateway.precedents import wait_until_unsearchable
+
     for name in RUN_STATE:
         db[name].delete_many({})
+    learned = list(db.precedents.find({"seeded": False}))
     db.precedents.delete_many({"seeded": False})
+    if learned:  # rulings made in the last session must be gone from the search index as well
+        try:
+            wait_until_unsearchable(db, learned)
+        except Exception:
+            pass  # search indexes may not exist yet on a first setup
     for name, docs in FIXTURES.items():
         db[name].delete_many({})
         db[name].insert_many([dict(d) for d in docs])

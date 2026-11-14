@@ -1,90 +1,100 @@
 # 05 Demo
 
-Round 1: about 3 minutes live plus 1 to 2 minutes of Q&A, in a room, to a small group of judges. Finals: 3 minutes on stage plus 2 minutes of Q&A. The submission also needs a 1-minute video.
+Round 1: about 3 minutes live plus Q&A, to a few judges. Finals: 3 minutes on stage. The submission also needs a 1-minute video. This version replaces the script written the night before: it is built around the learning loop.
 
-Rule to respect: show only what was built today. Say so once: "Everything you are about to see was built since 10:45 this morning."
+Say once: "Everything you are about to see was built since 10:45 this morning."
 
-## Screen layout
+## Setup
 
-Left half: reviewer console (timeline, run controls). Right half: terminal with the agent's output. Keep Atlas Data Explorer open in a second tab for the tamper moment.
+    ./warrant demo --scripted        # resets, then serves http://127.0.0.1:8000
 
-## 3-minute script
+Console full screen. A terminal behind it with `./warrant replay` typed and not yet run. Headset on if using voice. The five demo steps are keys **1** to **5**. Click an empty area first so the keys are not typed into a text box.
+
+Between rehearsals press **Reset**. It waits until Atlas has dropped the last session's rulings from the search index, so step 1 goes through again.
+
+## Round 1 script (3:00)
 
 | Time | Say | Do |
 |---|---|---|
-| 0:00 | "Agents stall at pilot for one reason: nobody can prove what the agent did, who allowed it, or stop it. Rules in a prompt are suggestions. Warrant puts the rules in the database." | Title on screen |
-| 0:15 | "This is a refunds agent at a logistics company, working a queue of five tickets. Every tool call goes through our gateway. No call runs without a warrant: a single-use authorization checked against policy in Atlas, before the action." | Start the run. Timeline fills: T1 and T2 allowed, executed, verified |
-| 0:40 | "Ticket 4 is in British Columbia. This agent is scoped to Ontario. Denied before it ran, and here is the rule and its version." | Click the denied entry |
-| 0:55 | "Ticket 5 has a prompt injection in the customer note. The model falls for it and tries to transfer $5,000. The gateway does not care what the model thinks. Denied." | Show the terminal line where the agent attempts the transfer, then the deny entry |
-| 1:15 | "Ticket 3 is a $1,200 refund, over this agent's limit. That is a step-up. The run pauses for a human." | Approval card appears. Approve (button, or voice if built) |
-| 1:35 | "Now the part everyone asks about. Stop it." | Click Kill mid-run. Next call is refused. Warrants show revoked |
-| 1:50 | "And undo it. Reversible steps are compensated from the record's before-image. The email it already sent cannot be unsent, and we say so." | Click Rollback. Show the report |
-| 2:10 | "A reviewer can reconstruct the whole run: who, on whose behalf, what, why, which policy version, and whether the effect was verified." | Run `replay` in the terminal |
-| 2:25 | "The ledger is append-only and hash-chained. Watch me try to edit it." | Attempt the edit in Atlas. Rejected, or `verify` flags the entry |
-| 2:40 | "Under the hood: schema validation on the ledger, the decision and the record in one transaction, single-use warrants on a TTL index, change streams for the kill switch. It is a gateway, so it works with any agent that calls tools." | Architecture slide or the Atlas collections view |
-| 2:55 | "Warrant. No agent action without a warrant." | |
+| 0:00 | "This $300 refund is under every limit. Watch." | **1**. It is allowed, executed, verified |
+| 0:12 | "Nothing broke a rule. A person would have said no: the money is going to someone else's card. Rules only catch what someone wrote down." | |
+| 0:22 | "Warrant sits between the agent and its tools. Every call: who is asking and for whom, policy stored in Atlas, a single-use warrant, all in one transaction." | **2**. Queue runs: allowed, refused by region, injected $5,000 transfer refused |
+| 0:50 | "This one is over the limit, so a human decides. These are the closest past decisions, from one Atlas pipeline: vector and text search fused, then reranked." | Point at the pipeline strip and the precedents |
+| 1:05 | Speak: "Deny. Refunds only go back to the original payment method." Then read the code | **3** (voice). Fallback: type the reason, press Deny |
+| 1:35 | "Atlas embedded that ruling itself. There is no embedding code in this app." | "Learned" notice |
+| 1:42 | "Same $300 request again." | **4**. Stopped: resembles the ruling, score about 0.82, my words on the card |
+| 1:58 | "No rule was edited. Search can tighten a decision automatically. Only a human can loosen one." | |
+| 2:08 | "And the one that got through at the start: undo it." | **5**. Refund reversed. Email marked "cannot undo" |
+| 2:25 | "What was hard: the decision, the warrant and the ledger entry commit in one transaction. A warrant is bound to the exact arguments, so a replayed or altered call is refused. 44 acceptance tests run against this cluster." | Terminal: `./warrant replay` |
+| 2:45 | "Warrant. Policy is the statute, precedents are the case law, and both live in Atlas." | |
 
-If something breaks: switch to scripted agent mode (no model calls) and keep talking. If the network dies: play the 1-minute video and narrate.
+If something breaks: every step is also a button. If voice fails, type the reason. If the network dies, play the video and narrate.
 
-## Finals additions
+## Finals (3:00, four criteria weighted equally)
 
-Finals weight creativity and impact equally with the rest. Add, in this order if built:
-- Voice step-up at 1:15, spoken live. One exchange, under 15 seconds.
-- Precedent card: "It found a similar approval from last week and showed it to the approver."
-- A different agent (Claude Desktop) governed by the same gateway: one blocked call.
+Open with the buyer: "If your agents move money or touch customer records, this is the layer your risk team asks for." Keep steps 1, 3, 4 and 5. Cut the queue narration to one sentence. Close with the live Claude agent going through the same gate (`./warrant demo`, then **2**).
 
-Open with the buyer: "If you run agents that move money or touch customer records, this is the layer your risk team is going to ask for."
+## 1-minute video
 
-## 1-minute video script
-
-| Time | Content |
+| Seconds | Shot |
 |---|---|
-| 0:00 to 0:08 | Problem in one sentence over the title |
-| 0:08 to 0:25 | Run starts, allowed steps, the out-of-scope deny |
-| 0:25 to 0:35 | Prompt injection denied |
-| 0:35 to 0:47 | Kill, then rollback |
-| 0:47 to 0:55 | `replay` and the tamper attempt |
-| 0:55 to 1:00 | Name and one line |
+| 0 to 5 | Console on screen. "A $300 refund that passes every rule. It shouldn't." |
+| 5 to 12 | Step 1: it is paid. Caption: "Rules only catch what someone wrote down" |
+| 12 to 40 | Uncut: deny the $900 request with a reason, the Learned notice, step 4 stopped with the citation |
+| 40 to 52 | Proof: the aggregation in `gateway/precedents.py`, `pytest` passing, `git log` showing today's commits |
+| 52 to 58 | "Warrant. Built today on MongoDB Atlas." |
 
-Record it at 4:30 PM from a clean reset, screen plus voice, one take. Upload unlisted and test the link in a private window.
+Record with Shift-Command-5 (Record Selected Portion, microphone on, Show Mouse Clicks). The recorder captures the microphone, not system audio, so narrate over the voice step or use the typed reason. Trim in QuickTime. Upload to YouTube as Unlisted and play the link in a private window with sound. Start recording by 3:45 PM.
+
+## One sentence for each judge
+
+| Judge | Sentence |
+|---|---|
+| MongoDB search and product | "One aggregation: `$rankFusion` over an auto-embedding index and Atlas Search, then `$rerank` on 9.0, inside an authorization decision." |
+| Identity (Okta) | "The ledger keeps the human who authorized separate from the agent that acted, and step-up is an out-of-band approval." |
+| Fintech (Wealthsimple, Zafin) | "Defined human-approval points, a kill switch, and a traceable reason for every money movement." |
+| Retrieval and research (Cohere, Vector Institute) | "Retrieved text is treated as untrusted, the reranker is one swappable stage, and the tests were written first." |
+| Voice | "Voice is a channel, not the control. A challenge code binds it to the approver and the transcript is evidence." |
+| Microsoft | "Per-call policy and chained logs exist already. We add warrants bound to the call, precedents, and undo." |
+
+## Do not claim
+
+- That Atlas Agent Engine lacks audit or human review. It has traces and a review action. The accurate gap is argument-level rules, default deny, in-flight policy changes and rollback, as documented in its preview.
+- That Warrant is compliant with any regulation or guideline.
+- That one vendor's reranker beats another's.
+- That the hash chain makes the ledger tamper-proof. It makes edits detectable.
+- That rollback is general. It compensates refunds and CRM updates in the mock systems.
 
 ## Q&A bank
 
-**Why MongoDB for this and not Postgres?**
-The ledger entries, warrants, policies and tool payloads are differently shaped documents that evolve per tool. Schema validation gives strictness where it matters and flexibility in the payload. Change streams give the kill switch and live view without extra infrastructure. Policy over history is one aggregation next to the data.
+**Why MongoDB and not Postgres?**
+Ledger entries, warrants, policies and tool payloads are differently shaped documents. Schema validation is strict where it matters. Change streams give the kill switch and the live feed with no extra infrastructure. And the precedent search, embedding included, runs inside the database next to the data it protects.
 
-**What happens if the gateway crashes between executing and recording?**
-The warrant is marked used before execution and the decision entry already exists. On restart, a reconciler finds used warrants with no execution entry, reads the target system to see whether the effect happened, and writes the missing entries. The idempotency key prevents a double effect on retry.
+**Why is search in an authorization path? Isn't that non-deterministic?**
+Search only supplies a fact: is the closest past ruling a denial above a recorded threshold. Policy still decides, and that fact can only make the outcome stricter. The precedent, score and threshold are written into the ledger entry, so the decision is explainable afterwards. If search fails, the call goes to a human.
 
-**Is the kill switch really immediate?**
-The change stream gives sub-second notification. Correctness does not depend on it: every decision transaction re-reads the run status, so a killed run cannot get a new warrant even if the stream lags.
+**What stops a bad ruling from poisoning everything?**
+A denial can only cause more requests to reach a human. It cannot approve anything. Rulings carry who made them and through which channel. Review and expiry of precedents is the next thing to build.
 
-**How is this different from guardrails or prompt rules?**
-Those run inside or beside the model and can be argued with. This is enforcement at the tool boundary, outside the model, with a database record of every decision.
+**How is this different from Agent Engine's policy engine?**
+As documented in preview, that is tool allowlists and budgets, checked against a snapshot taken when a run starts. Warrant decides per call on arguments, data and history, denies by default, and a kill or policy change applies to the next call of a running agent.
+
+**How is this different from Microsoft's Agent Governance Toolkit?**
+That already does per-call policy, hash-chained logs and kill switches. Warrant adds warrants bound to the call, precedent search and rollback, and keeps everything as data in the customer's own Atlas cluster.
+
+**What if the gateway crashes between executing and recording?**
+The warrant is already marked used and the decision entry exists, so the gap is detectable. The reconciler that repairs it is not built.
+
+**Is the kill switch immediate?**
+A change stream tells the gateway. Correctness does not depend on it: every call reads the run's status, and the decision transaction reads it again.
 
 **Can someone with database access rewrite history?**
-The gateway's database user can insert and read the ledger, not update or delete. Entries are hash-chained, so any edit by a privileged user is detectable. (If the sandbox did not allow a custom role, say: in the sandbox we rely on the chain, in production you add the role.)
+Edits are detectable through the hash chain. Preventing them needs a database user that can only insert into the ledger, which is a production step not done today.
 
-**How do identities work in production?**
-The demo uses API keys. The model maps directly to workload identity plus delegated user identity from an identity provider: the agent's credential says which agent, the token it carries says on whose behalf.
-
-**How does it scale to hundreds of agents?**
-Decisions are indexed lookups and one small transaction. The chain is per run, so runs do not contend. Policies are data, so adding a team is adding documents.
-
-**What about actions that cannot be undone?**
-They are marked irreversible in the tool registry, policy can require a step-up for them, and rollback reports them honestly.
+**Did the model fall for the prompt injection?**
+Claude declined both planted instructions on its own. That is the point: you cannot prove it will tomorrow. The scripted agent shows the run where the model does not resist, and the gateway refuses it.
 
 **What did you build today, and what is a library?**
-Built today: gateway, policy engine, warrant and ledger model, kill and rollback, console, CLI, mock systems, demo agent. Libraries: the MongoDB driver, the web framework, LangGraph and its MongoDB checkpointer for the demo agent's own state.
+Built today: gateway, policy engine, ledger, precedent pipeline, kill and rollback, control API, console, CLI, mock systems, both agents, the tests. Libraries: PyMongo, FastAPI, LangGraph with its MongoDB checkpointer, the ElevenLabs browser SDK.
 
-**Where does Vector Search come in?**
-Precedents: human decisions are embedded and retrieved when a similar request appears. (If not built, say it is the next step and why.)
-
-## Teammate runbook (if you are not in the room)
-
-1. Open the repo README. Run the reset command, then the demo command.
-2. Open the console URL printed in the terminal. Arrange the screen as in "Screen layout".
-3. Follow the 3-minute script row by row. The buttons are labelled Kill, Rollback, Approve.
-4. If the model is slow, add the scripted flag shown in the README.
-5. For Q&A, the answers above are enough. If asked something you cannot answer, say "the gateway design doc in the repo covers that" and point to `/docs/03-ARCHITECTURE.md`.
-6. Submission details and the video link are in the README footer.
+See `docs/ONE-PAGER.md` for the questions to ask judges before judging starts.

@@ -3,100 +3,184 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Warrant reviewer console</title>
+<title>Warrant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0e1512; --panel:#15201b; --line:#24342c; --text:#e6efe9; --dim:#8ea398; --green:#3ddc84;
-          --red:#ff6b6b; --amber:#ffc24b; --blue:#6cb6ff; --violet:#b69cff; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
-  header { display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  h1 { font-size:16px; margin:0; letter-spacing:.02em; }
-  h1 small { color:var(--dim); font-weight:400; margin-left:8px; }
-  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:0 0 10px; }
+  /* Color values follow MongoDB's open LeafyGreen palette for a familiar feel. Warrant is not affiliated with MongoDB. */
+  :root {
+    --page:#001E2B; --panel:#112733; --inset:#1C2D38; --line:rgba(255,255,255,.10); --line2:#3D4F58;
+    --text:#E8EDEB; --text2:#C1C7C6; --muted:#889397;
+    --ok-bg:#023430; --ok-bd:#00684A; --ok-tx:#71F6BA;
+    --no-bg:#5B0000; --no-bd:#970606; --no-tx:#FFCDC7;
+    --hold-bg:#4C2100; --hold-bd:#944F01; --hold-tx:#FFEC9E;
+    --info-bg:#0C2657; --info-bd:#083C90; --info-tx:#C3E7FE;
+    --vio-bg:#2D0B59; --vio-bd:#5E0C9E; --vio-tx:#F1D4FD;
+    --gold:#E9B949; --link:#0498EC; --danger:#DB3030;
+    --sans:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono:"Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --serif:Fraunces, "Iowan Old Style", Georgia, serif;
+    --fast:150ms ease-in-out; --slow:300ms ease-in-out;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--page); color:var(--text); font:14px/1.5 var(--sans); display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
+  .mono { font-family:var(--mono); font-size:12.5px; }
+  .muted { color:var(--muted); }
+
+  /* top bar */
+  header { display:flex; align-items:center; gap:18px; padding:12px 22px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .seal { width:30px; height:30px; border-radius:50%; border:1.5px solid var(--gold); color:var(--gold); display:grid; place-items:center; font:600 16px/1 var(--serif); box-shadow:inset 0 0 0 3px var(--page), inset 0 0 0 4px rgba(233,185,73,.35); }
+  .brand b { font:600 21px/1 var(--serif); letter-spacing:.01em; }
+  .brand small { color:var(--muted); font-size:12.5px; }
+  .runbox { display:flex; align-items:center; gap:10px; }
+  .live { width:10px; height:10px; border-radius:50%; background:var(--muted); transition:background var(--slow); }
+  .live.running { background:#00ED64; animation:pulse 1.4s ease-in-out infinite; }
+  .live.waiting { background:var(--gold); animation:pulse 2.2s ease-in-out infinite; }
+  .live.killed { background:var(--danger); } .live.rolled_back { background:#B45AF2; } .live.completed { background:#00A35C; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(0,237,100,.45); } 50% { box-shadow:0 0 0 7px rgba(0,237,100,0); } }
+  select { font:inherit; font-size:13px; color:var(--text2); background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 8px; max-width:230px; }
+  .stats { display:flex; gap:22px; margin-left:6px; }
+  .stat b { display:block; font:600 20px/1.1 var(--serif); }
+  .stat span { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .spacer { flex:1; }
-  button { font:inherit; color:var(--text); background:#1d2b24; border:1px solid var(--line); border-radius:6px; padding:7px 12px; cursor:pointer; }
-  button:hover { border-color:var(--dim); }
-  button:disabled { opacity:.4; cursor:default; }
-  button.kill { background:#3a1616; border-color:#7a2b2b; color:#ffb3b3; font-weight:600; }
-  select { font:inherit; color:var(--text); background:#1d2b24; border:1px solid var(--line); border-radius:6px; padding:6px 8px; max-width:190px; }
-  .new-tag { color:#0e1512; background:var(--amber); border-radius:4px; padding:1px 6px; font-size:11px; font-weight:700; }
-  button.go { background:#123222; border-color:#1f6b45; color:#aef5cd; font-weight:600; }
-  main { display:grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap:16px; padding:16px 18px; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; min-width:0; }
-  .status { padding:3px 9px; border-radius:99px; font-size:12px; border:1px solid var(--line); }
-  .s-running { color:var(--green); border-color:#1f6b45; } .s-killed { color:var(--red); border-color:#7a2b2b; }
-  .s-rolled_back { color:var(--violet); } .s-completed { color:var(--blue); }
-  #runid, .mono { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
-  #runid { color:var(--dim); }
-  .row { display:grid; grid-template-columns: 38px 96px 34px 150px minmax(0,1fr); gap:8px; padding:6px 4px; border-bottom:1px solid #1b2a23; cursor:pointer; align-items:baseline; }
-  .row:hover { background:#192720; }
-  .row.new { animation: flash 1.2s ease-out; }
-  @keyframes flash { from { background:#20402f; } to { background:transparent; } }
-  .seq, .step { color:var(--dim); font-variant-numeric: tabular-nums; }
-  .badge { font-size:11px; padding:2px 7px; border-radius:4px; border:1px solid var(--line); white-space:nowrap; text-align:center; }
-  .b-allow { color:var(--green); border-color:#1f6b45; } .b-deny, .b-violation, .b-kill { color:var(--red); border-color:#7a2b2b; }
-  .b-step_up { color:var(--amber); border-color:#7a5a1c; } .b-execution, .b-verification { color:var(--blue); }
-  .b-approval { color:var(--amber); } .b-rollback { color:var(--violet); }
-  .what { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#c9d8cf; }
-  .tool { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #timeline { max-height: calc(100vh - 190px); overflow:auto; }
-  .card { border:1px solid #7a5a1c; border-radius:8px; padding:12px; margin-bottom:12px; background:#1b2219; }
-  .card h3 { margin:0 0 4px; font-size:14px; }
-  .card p { margin:4px 0; color:#c9d8cf; }
-  .prec { border-left:3px solid var(--line); padding:4px 8px; margin:6px 0; font-size:12.5px; }
-  .prec.approved { border-color:var(--green); } .prec.denied { border-color:var(--red); }
-  .prec b.approved { color:var(--green); } .prec b.denied { color:var(--red); }
-  .dim { color:var(--dim); }
-  input[type=text] { width:100%; font:inherit; background:#0f1814; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:7px 9px; margin:8px 0; }
-  .actions { display:flex; gap:8px; }
-  pre { white-space:pre-wrap; word-break:break-word; background:#0f1814; border:1px solid var(--line); border-radius:8px; padding:10px; font-size:12px; max-height:340px; overflow:auto; margin:0; }
-  .empty { color:var(--dim); padding:8px 4px; }
-  .talk { background:#0f1814; border:1px solid var(--line); border-radius:6px; padding:8px; margin-top:8px; font-size:12.5px; max-height:170px; overflow:auto; }
-  .talk div { margin:3px 0; }
-  #report div { margin:3px 0; }
+  button { font:500 13px/1 var(--sans); color:var(--text); background:var(--inset); border:1px solid var(--line); border-radius:6px; padding:9px 13px; cursor:pointer; transition:border-color var(--fast), background var(--fast), opacity var(--fast); }
+  button:hover:not(:disabled) { border-color:var(--line2); background:#22363f; }
+  button:disabled { opacity:.38; cursor:default; }
+  button.primary { background:var(--ok-bd); border-color:#00A35C; color:#fff; }
+  button.primary:hover:not(:disabled) { background:#007a57; }
+  button.danger { background:#3a1010; border-color:var(--no-bd); color:var(--no-tx); }
+  button.ghost { background:transparent; }
+
+  /* layout */
+  main { flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:18px; padding:18px 22px; }
+  @media (max-width:980px) { main { grid-template-columns:1fr; overflow:auto; } }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px 20px; min-width:0; }
+  .col { display:flex; flex-direction:column; gap:18px; min-height:0; overflow:auto; }
+  #runpanel { display:flex; flex-direction:column; min-height:0; }
+  h2 { font:600 12px/1 var(--sans); letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:0 0 14px; display:flex; gap:10px; align-items:baseline; }
+  h2 span { font-weight:400; letter-spacing:.02em; text-transform:none; }
+  #timeline { overflow:auto; flex:1; min-height:120px; margin:0 -8px; padding:0 8px; }
+  .empty { color:var(--muted); padding:10px 2px; }
+
+  /* step rows */
+  .step { display:grid; grid-template-columns:30px minmax(0,1fr); gap:10px; padding:9px 8px; border-radius:8px; cursor:pointer; transition:background var(--fast); }
+  .step + .step, .step + .banner, .banner + .step { border-top:1px solid var(--line); border-top-left-radius:0; border-top-right-radius:0; }
+  .step:hover { background:rgba(255,255,255,.035); }
+  .step.new { animation:rowin 900ms ease-out; }
+  @keyframes rowin { from { background:rgba(0,237,100,.16); transform:translateY(4px); opacity:.4; } to { background:transparent; transform:none; opacity:1; } }
+  .step .n { color:var(--muted); font:600 12.5px/26px var(--mono); text-align:right; }
+  .line1 { display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-height:26px; }
+  .tool { font:600 13px/1 var(--mono); }
+  .amt { font:600 15px/1 var(--serif); color:var(--text); }
+  .why { color:var(--text2); font-size:13px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chip { display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:24px; border:1px solid; font:600 10.5px/1 var(--sans); letter-spacing:.045em; text-transform:uppercase; white-space:nowrap; }
+  .chip.ok { background:var(--ok-bg); border-color:var(--ok-bd); color:var(--ok-tx); }
+  .chip.no { background:var(--no-bg); border-color:var(--no-bd); color:var(--no-tx); }
+  .chip.hold { background:var(--hold-bg); border-color:var(--hold-bd); color:var(--hold-tx); }
+  .chip.info { background:var(--info-bg); border-color:var(--info-bd); color:var(--info-tx); }
+  .chip.vio { background:var(--vio-bg); border-color:var(--vio-bd); color:var(--vio-tx); }
+  .chip.dim { background:transparent; border-color:var(--line2); color:var(--text2); }
+  .arrow { color:var(--line2); font-size:12px; }
+  .banner { margin:8px 0; padding:11px 14px 11px 22px; border-radius:12px; border:1px solid var(--no-bd); background:linear-gradient(90deg, var(--no-bd) 0 10px, rgba(91,0,0,.35) 10px); color:var(--no-tx); }
+  .detail { margin:2px 0 10px 40px; background:var(--page); border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+  .detail .e { display:grid; grid-template-columns:34px 96px minmax(0,1fr); gap:10px; color:var(--text2); padding:2px 0; }
+  .detail pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font:12px/1.45 var(--mono); color:var(--text2); max-height:220px; overflow:auto; }
+
+  /* decision desk */
+  .card { border:1px solid var(--hold-bd); border-radius:12px; padding:16px; background:linear-gradient(180deg, rgba(76,33,0,.38), rgba(76,33,0,.10)); animation:rowin 600ms ease-out; }
+  .card + .card { margin-top:14px; }
+  .card h3 { margin:0; font:600 22px/1.2 var(--serif); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .card h3 small { font:500 12.5px/1 var(--mono); color:var(--muted); }
+  .card p { margin:7px 0 0; color:var(--text2); }
+  .card p b { color:var(--text); font-weight:600; }
+  .note { color:var(--text); font-style:italic; }
+  .pipe { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:14px 0 8px; }
+  .pipe code { font:600 11.5px/1 var(--mono); padding:5px 8px; border-radius:6px; background:var(--page); border:1px solid var(--line); color:var(--info-tx); }
+  .pipe .ms { color:var(--muted); font-size:12px; margin-left:4px; }
+  .prec { border-left:3px solid var(--line2); padding:6px 0 6px 11px; margin:9px 0; font-size:13px; color:var(--text2); }
+  .prec.approved { border-color:#00A35C; } .prec.denied { border-color:var(--danger); }
+  .prec .head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px; }
+  .prec .said { color:var(--text); margin-top:3px; }
+  .learned { background:var(--gold); color:#2a1d00; border-radius:4px; padding:2px 7px; font:700 10.5px/1.2 var(--sans); letter-spacing:.05em; }
+  input[type=text] { width:100%; font:inherit; background:var(--page); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:9px 11px; margin-top:12px; transition:border-color var(--fast); }
+  input[type=text]:focus { outline:none; border-color:var(--link); }
+  .actions { display:flex; gap:8px; margin-top:10px; align-items:center; flex-wrap:wrap; }
+  .code { margin-left:auto; text-align:right; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .code b { display:block; font:600 22px/1.1 var(--mono); letter-spacing:.14em; color:var(--gold); }
+  .talk { margin-top:12px; background:var(--page); border:1px solid var(--line); border-radius:10px; padding:10px; max-height:210px; overflow:auto; display:flex; flex-direction:column; gap:6px; }
+  .bub { max-width:88%; padding:7px 11px; border-radius:12px; font-size:13px; background:var(--inset); align-self:flex-start; animation:rowin 300ms ease-out; }
+  .bub.you { align-self:flex-end; background:var(--ok-bd); color:#fff; }
+  .bub.err { background:var(--no-bg); color:var(--no-tx); }
+  .voicebar { display:flex; align-items:center; gap:10px; margin-top:10px; color:var(--muted); font-size:12px; }
+  .bars { display:flex; align-items:flex-end; gap:3px; height:18px; }
+  .bars i { width:3px; height:4px; border-radius:2px; background:var(--muted); }
+  .bars.speaking i, .bars.listening i { background:#A0B9D1; animation:lvl 900ms ease-in-out infinite; }
+  .bars.listening i { background:#00ED64; animation-duration:1500ms; }
+  .bars i:nth-child(2) { animation-delay:120ms; } .bars i:nth-child(3) { animation-delay:240ms; } .bars i:nth-child(4) { animation-delay:360ms; } .bars i:nth-child(5) { animation-delay:480ms; }
+  @keyframes lvl { 0%,100% { height:4px; } 50% { height:18px; } }
+  #notices > div { padding:9px 0; border-top:1px solid var(--line); color:var(--text2); animation:rowin 500ms ease-out; }
+  #notices > div:first-child { border-top:0; padding-top:0; }
+  #notices b { color:var(--text); }
+
+  /* presenter stepper */
+  footer { display:flex; gap:10px; padding:12px 22px; border-top:1px solid var(--line); background:rgba(17,39,51,.7); overflow-x:auto; }
+  .stepbtn { flex:1; min-width:150px; display:flex; align-items:center; gap:10px; text-align:left; padding:10px 12px; border-radius:10px; }
+  .stepbtn kbd { flex:none; width:24px; height:24px; border-radius:6px; border:1px solid var(--line2); display:grid; place-items:center; font:600 12px/1 var(--mono); color:var(--text2); background:var(--page); }
+  .stepbtn span { display:block; font-weight:600; }
+  .stepbtn small { display:block; color:var(--muted); font-weight:400; margin-top:3px; font-size:11.5px; }
+  .stepbtn.done kbd { background:var(--ok-bd); border-color:#00A35C; color:#fff; }
+  .stepbtn.next { border-color:var(--gold); box-shadow:0 0 0 1px rgba(233,185,73,.35); }
 </style>
 </head>
 <body>
 <header>
-  <h1>Warrant <small>no agent action without a warrant</small></h1>
-  <span id="status" class="status">no run</span>
-  <span id="runid"></span>
+  <div class="brand"><div class="seal">W</div><div><b>Warrant</b><br><small>no agent action without a warrant</small></div></div>
+  <div class="runbox"><span id="live" class="live"></span><select id="runs" title="Switch run"></select></div>
+  <div class="stats">
+    <div class="stat"><b id="s-ok">0</b><span>allowed</span></div>
+    <div class="stat"><b id="s-no">0</b><span>refused</span></div>
+    <div class="stat"><b id="s-hold">0</b><span>waiting</span></div>
+    <div class="stat"><b id="s-money">$0</b><span>moved</span></div>
+  </div>
   <span class="spacer"></span>
-  <select id="runs" title="Switch run"></select>
-  <button class="go" id="start">Start run</button>
-  <button id="late" title="A new run with one ticket that arrives later (T8)">Late ticket</button>
-  <button class="kill" id="kill" disabled>Kill</button>
-  <button id="rollback" disabled>Rollback</button>
-  <button id="verify" disabled>Verify chain</button>
-  <button id="reset">Reset</button>
+  <button class="danger" id="kill" disabled>Kill run</button>
+  <button id="rollback" disabled>Roll back</button>
+  <button id="verify" disabled>Verify ledger</button>
+  <button class="ghost" id="full" title="The full seven-ticket queue">Full queue</button>
+  <button class="ghost" id="reset">Reset</button>
 </header>
 <main>
-  <section>
-    <h2>Ledger, live from Atlas change streams</h2>
-    <div id="timeline"><div class="empty">Start a run. Every decision, execution and control action appears here as it is written.</div></div>
+  <section id="runpanel">
+    <h2>Agent run <span>every decision, live from Atlas change streams</span></h2>
+    <div id="timeline"><div class="empty">Nothing yet. Press 1 to send a request through the gateway.</div></div>
   </section>
-  <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+  <div class="col">
     <section>
-      <h2>Waiting for a human</h2>
+      <h2>Decision desk <span>requests that need a human</span></h2>
       <div id="approvals"><div class="empty">Nothing is waiting.</div></div>
     </section>
     <section>
-      <h2>Report</h2>
-      <div id="report" class="empty">Kill, rollback and chain verification results appear here.</div>
-    </section>
-    <section>
-      <h2>Entry detail</h2>
-      <pre id="detail">Click a ledger entry.</pre>
+      <h2>Notices</h2>
+      <div id="notices"><div class="muted">Kill, rollback, learning and verification results appear here.</div></div>
     </section>
   </div>
 </main>
+<footer id="stepper"></footer>
 <script>
 const $ = id => document.getElementById(id);
 const money = c => '$' + (c / 100).toLocaleString('en-US', {maximumFractionDigits: 0});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let runId = null, entries = new Map(), approvals = new Map(), cfg = {};
-let voice = {id: null, lines: [], session: null, textOnly: false};
+const who = id => String(id || '').replace(/^(human|agent):/, '');
+const params = new URLSearchParams(location.search);
+const PACE = Number(params.get('pace') || 0.5);
+const DEMO_QUEUE = ['T1', 'T4', 'T5', 'T7'], LATE = ['T8'];
+
+let runId = null, runList = [], entries = new Map(), approvals = new Map(), cfg = {}, open = new Set();
+let learned = [], notices = [];
+let voice = {id: null, lines: [], session: null, textOnly: false, mode: ''};
 
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
@@ -105,122 +189,179 @@ async function api(path, body) {
   return data;
 }
 
-function describe(e) {
-  const p = e.payload || {};
-  if (e.type === 'decision') {
-    const refs = (e.policy_refs || []).map(r => `${r.id} v${r.version}`).join(', ') || p.rule;
-    const prec = p.precedent && p.precedent.denied_match ? `  ·  resembles ${p.precedent.nearest_id} (denied, ${Number(p.precedent.score ?? 0).toFixed(2)})` : '';
-    return `${refs}${prec}  ·  ${e.reason || ''}`;
+function notice(html) {
+  notices.unshift(html);
+  notices = notices.slice(0, 5);
+  $('notices').innerHTML = notices.map(n => `<div>${n}</div>`).join('');
+}
+
+/* ---------- timeline: one row per agent step ---------- */
+const chip = (kind, text) => `<span class="chip ${kind}">${esc(text)}</span>`;
+
+function rows() {
+  const steps = new Map(), out = [];
+  for (const e of [...entries.values()].sort((a, b) => a.seq - b.seq)) {
+    if (e.step == null) { out.push({control: e}); continue; }
+    let s = steps.get(e.step);
+    if (!s) { s = {step: e.step, tool: e.tool, entries: []}; steps.set(e.step, s); out.push(s); }
+    s.entries.push(e);
+    if (e.tool) s.tool = e.tool;
   }
-  if (e.type === 'execution') return p.ok ? `executed${p.result_id ? ' → ' + p.result_id : ''}` : `failed: ${p.error}`;
-  if (e.type === 'verification') return `verified: ${p.verified}  ·  ${p.detail}`;
-  if (e.type === 'approval') return `${p.decision} by ${e.actor} via ${p.channel}${e.reason ? '  ·  “' + e.reason + '”' : ''}`;
-  if (e.type === 'kill') return `by ${e.actor}: ${e.reason}  ·  ${p.warrants_revoked} warrant(s) revoked`;
-  if (e.type === 'rollback') return p.undone ? `undone: ${p.compensation}` : `${p.follow_up}`;
-  if (e.type === 'violation') return `${p.code}${p.why ? ': ' + p.why : ''}`;
-  return '';
+  return out;
 }
 
-function renderTimeline(flashId) {
-  const list = [...entries.values()].sort((a, b) => a.seq - b.seq);
+function stepChips(s) {
+  const out = [];
+  for (const e of s.entries) {
+    const p = e.payload || {};
+    if (e.type === 'decision') {
+      const refs = (e.policy_refs || []).map(r => r.id).join(' + ') || p.rule;
+      out.push(chip({allow: 'ok', deny: 'no', step_up: 'hold'}[e.decision], `${{allow: 'Allowed', deny: 'Refused', step_up: 'Needs a human'}[e.decision]} · ${refs}`));
+      const pr = p.precedent || {};
+      if (pr.denied_match && pr.nearest_id) out.push(chip('hold', `resembles ${pr.nearest_id}${pr.score != null ? ' · ' + Number(pr.score).toFixed(2) : ''}`));
+    } else if (e.type === 'approval') {
+      out.push(chip(p.decision === 'approved' ? 'ok' : 'no', `${p.decision} by ${who(e.actor)} · ${p.channel}`));
+    } else if (e.type === 'execution') {
+      out.push(chip(p.ok ? 'info' : 'no', p.ok ? 'Executed' : 'Failed'));
+    } else if (e.type === 'verification') {
+      if (p.verified === true) out.push(chip('ok', 'Verified'));
+      else if (p.verified === 'unknown') out.push(chip('dim', 'Sent · cannot verify'));
+      else if (p.verified === false) out.push(chip('no', 'Not verified'));
+    } else if (e.type === 'violation') {
+      out.push(chip('no', p.code === 'KILLED' ? 'Refused · run killed' : String(p.code).replace(/_/g, ' ')));
+    } else if (e.type === 'rollback') {
+      out.push(chip(p.undone ? 'vio' : 'hold', p.undone ? 'Undone' : 'Cannot undo'));
+    }
+  }
+  return out.join('<span class="arrow">›</span>');
+}
+
+function renderTimeline(flashStep) {
+  const list = rows();
   if (!list.length) return;
-  $('timeline').innerHTML = list.map(e => {
-    const kind = e.type === 'decision' ? e.decision : e.type;
-    return `<div class="row ${e._id === flashId ? 'new' : ''}" data-id="${esc(e._id)}">
-      <span class="seq">${e.seq}</span><span class="badge b-${kind}">${kind.replace('_', '-')}</span>
-      <span class="step">${e.step ?? ''}</span><span class="tool mono">${esc(e.tool || '')}</span>
-      <span class="what" title="${esc(describe(e))}">${esc(describe(e))}</span></div>`;
+  $('timeline').innerHTML = list.map(s => {
+    if (s.control) {
+      const e = s.control, p = e.payload || {};
+      return `<div class="banner"><b>Run killed by ${esc(who(e.actor))}.</b> ${esc(e.reason || '')} · ${p.warrants_revoked || 0} unused warrant(s) revoked</div>`;
+    }
+    const first = s.entries.find(e => e.type === 'decision') || s.entries[0];
+    const amount = first.payload?.args?.amount_cents;
+    const detail = !open.has(s.step) ? '' : `<div class="detail">${s.entries.map(e =>
+        `<div class="e mono"><span>#${e.seq}</span><span>${esc(e.type)}</span><span>${esc(e.prev_hash.slice(0, 10))}… → ${esc(e.hash.slice(0, 10))}…</span></div>`).join('')}
+        <pre>${esc(JSON.stringify(s.entries.map(e => ({seq: e.seq, type: e.type, actor: e.actor, on_behalf_of: e.on_behalf_of, decision: e.decision, policy_refs: e.policy_refs, precedent_refs: e.precedent_refs, warrant_id: e.warrant_id, payload: e.payload})), null, 2))}</pre></div>`;
+    return `<div class="step ${s.step === flashStep ? 'new' : ''}" data-step="${s.step}">
+      <div class="n">${s.step}</div>
+      <div><div class="line1"><span class="tool">${esc(s.tool || '')}</span>${amount ? `<span class="amt">${money(amount)}</span>` : ''}${stepChips(s)}</div>
+      <div class="why">${esc(first.reason || '')}</div></div></div>${detail}`;
   }).join('');
-  if (flashId) $('timeline').scrollTop = $('timeline').scrollHeight;
+  if (flashStep != null) $('timeline').scrollTop = $('timeline').scrollHeight;
 }
 
+function renderStats() {
+  let ok = 0, no = 0, moved = 0;
+  for (const e of entries.values()) {
+    const p = e.payload || {};
+    if (e.type === 'decision' && e.decision === 'allow') ok++;
+    if ((e.type === 'decision' && e.decision === 'deny') || e.type === 'violation') no++;
+    if (e.type === 'execution' && p.ok && e.tool === 'payments.refund') moved += p.args?.amount_cents || 0;
+    if (e.type === 'rollback' && p.undone && p.amount_cents) moved -= p.amount_cents;
+  }
+  const waiting = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId).length;
+  $('s-ok').textContent = ok; $('s-no').textContent = no; $('s-hold').textContent = waiting; $('s-money').textContent = money(moved);
+  const run = runList.find(r => r._id === runId);
+  $('live').className = 'live ' + (run ? (run.status === 'running' && waiting ? 'waiting' : run.status) : '');
+}
+
+/* ---------- decision desk ---------- */
 function renderApprovals() {
   const pending = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId);
+  renderStats(); renderStepper();
   if (!pending.length) { $('approvals').innerHTML = '<div class="empty">Nothing is waiting.</div>'; return; }
   $('approvals').innerHTML = pending.map(a => {
-    const q = a.request;
+    const q = a.request, talking = voice.id === a._id;
     const precs = (a.precedents || []).map(p => `<div class="prec ${p.decision}">
-        <b class="${p.decision}">${p.decision}</b> ${p.seeded === false ? '<span class="new-tag">LEARNED THIS SESSION</span> ' : ''}<span class="dim mono">${esc(p._id)} · ${a.precedent_mode === 'rerank' ? 'rerank ' + Number(p.rerank_score).toFixed(2) : 'fused'}</span><br>
-        ${esc(p.summary)}<br><span class="dim">${esc(p.decided_by || '')}: ${esc(p.outcome_note || '')}</span></div>`).join('');
+        <div class="head">${chip(p.decision === 'approved' ? 'ok' : 'no', p.decision)}${p.seeded === false ? '<span class="learned">LEARNED THIS SESSION</span>' : ''}
+          <span class="mono muted">${esc(p._id)}${p.rerank_score != null ? ' · rerank ' + Number(p.rerank_score).toFixed(2) : ''}</span></div>
+        ${esc(p.summary)}<div class="said">${esc(who(p.decided_by))}: “${esc(p.outcome_note || '')}”</div></div>`).join('');
     return `<div class="card" data-id="${esc(a._id)}">
-      <h3>${esc(q.tool)} ${q.args.amount_cents ? money(q.args.amount_cents) : ''} <span class="dim">step ${a.step}</span></h3>
-      <p><b>${esc(q.rule)}</b>: ${esc(q.explanation)}</p>
-      <p class="dim">${esc(q.agent_id)} on behalf of ${esc(q.on_behalf_of)}</p>
-      <p>Agent reason: ${esc(q.reason)}</p>${q.note ? `<p>Customer note: <i>${esc(q.note)}</i></p>` : ''}
-      <h2 style="margin-top:12px">Closest precedents (Atlas hybrid search, reranked)</h2>${precs || '<div class="empty">none</div>'}
-      <input type="text" class="note" placeholder="Your reason (becomes part of the precedent)">
-      <div class="actions"><button class="go" data-d="approved">Approve</button><button class="kill" data-d="denied">Deny</button>
-        <span class="spacer"></span>
-        ${cfg.elevenlabs_agent_id ? `<button data-v="voice">${voice.id === a._id ? 'End call' : '🎙 Brief me'}</button><button data-v="text" title="Same agent, typed instead of spoken">⌨</button>` : ''}</div>
-      ${cfg.elevenlabs_agent_id ? `<p class="dim" style="margin-top:8px">Voice challenge code: <b class="mono" style="color:var(--amber);font-size:15px">${esc(a.challenge)}</b></p>` : ''}
-      ${voice.id === a._id ? `<div class="talk">${voice.lines.map(l => `<div><b>${l.who}:</b> ${esc(l.text)}</div>`).join('') || '<span class="dim">Connecting…</span>'}</div>
+      <h3>${q.args.amount_cents ? money(q.args.amount_cents) : ''} ${esc(q.tool)} <small>step ${a.step}</small></h3>
+      <p><b>${esc(q.rule)}</b> ${esc(q.explanation)}</p>
+      <p>${esc(who(q.agent_id))} on behalf of ${esc(who(q.on_behalf_of))}: ${esc(q.reason)}</p>
+      ${q.note ? `<p class="note">“${esc(q.note)}”</p>` : ''}
+      <div class="pipe"><code>$vectorSearch · autoEmbed</code><span class="arrow">+</span><code>$search</code><span class="arrow">→</span><code>$rankFusion</code><span class="arrow">→</span><code>$rerank</code>
+        <span class="ms">closest past decisions${a.precedent_ms != null ? ' · ' + a.precedent_ms + ' ms in Atlas' : ''}</span></div>
+      ${precs || '<div class="empty">No precedents found.</div>'}
+      <input type="text" class="reason" placeholder="Your reason. It becomes part of the precedent.">
+      <div class="actions"><button class="primary" data-d="approved">Approve</button><button class="danger" data-d="denied">Deny</button>
+        ${cfg.elevenlabs_agent_id ? `<button data-v="voice">${talking && !voice.textOnly ? 'End call' : '🎙 Brief me'}</button><button class="ghost" data-v="text" title="The same agent, typed instead of spoken">⌨</button>
+        <div class="code">say this code<b>${esc(a.challenge)}</b></div>` : ''}</div>
+      ${talking ? `<div class="voicebar"><span class="bars ${esc(voice.mode)}"><i></i><i></i><i></i><i></i><i></i></span>${voice.session ? (voice.textOnly ? 'typed session' : (voice.mode || 'connected')) : 'connecting…'}</div>
+        <div class="talk">${voice.lines.map(l => `<div class="bub ${l.who === 'You' ? 'you' : l.who === 'Error' ? 'err' : ''}">${esc(l.text)}</div>`).join('')}</div>
         ${voice.textOnly ? '<input type="text" class="say" placeholder="Type your reply and press Enter">' : ''}` : ''}</div>`;
   }).join('');
+  const t = document.querySelector('.talk'); if (t) t.scrollTop = t.scrollHeight;
 }
 
-function setRun(run) {
-  if (!run) return;
-  runId = run._id;
-  $('runid').textContent = run._id;
-  $('status').textContent = run.status.replace('_', ' ');
-  $('status').className = 'status s-' + run.status;
-  $('kill').disabled = run.status !== 'running';
-  $('rollback').disabled = !['killed', 'completed'].includes(run.status);
-  $('verify').disabled = false;
-}
-
-function report(html) { $('report').className = ''; $('report').innerHTML = html; }
-
+/* ---------- runs ---------- */
 async function listRuns() {
-  const list = await api('/runs');
-  $('runs').innerHTML = list.map(r => `<option value="${esc(r._id)}" ${r._id === runId ? 'selected' : ''}>${esc(r._id)} · ${esc(r.status.replace('_', ' '))}</option>`).join('');
-  return list;
+  runList = await api('/runs');
+  $('runs').innerHTML = runList.map(r => `<option value="${esc(r._id)}" ${r._id === runId ? 'selected' : ''}>${esc(r.label || 'run')} · ${esc(r._id.slice(4))} · ${esc(r.status.replace('_', ' '))}</option>`).join('') || '<option>no runs yet</option>';
+  const run = runList.find(r => r._id === runId);
+  $('kill').disabled = !run || run.status !== 'running';
+  $('rollback').disabled = !run || !['killed', 'completed'].includes(run.status);
+  $('verify').disabled = !run;
+  renderStats(); renderStepper();
+  return runList;
 }
 
 async function loadRun(id) {
-  entries.clear();
-  runId = id;
-  setRun(await api(`/runs/${id}`));
+  runId = id; entries.clear(); open.clear();
+  $('timeline').innerHTML = '<div class="empty">Waiting for the first call…</div>';
   (await api(`/runs/${id}/ledger`)).forEach(e => entries.set(e._id, e));
   (await api('/approvals?status=pending')).forEach(a => approvals.set(a._id, a));
-  renderTimeline(); renderApprovals(); listRuns();
+  renderTimeline(); renderApprovals(); await listRuns();
 }
-$('runs').onchange = ev => loadRun(ev.target.value);
-$('late').onclick = async () => {
-  entries.clear(); $('timeline').innerHTML = '<div class="empty">A new run: one ticket that arrived later.</div>';
-  const {run_id} = await api('/runs', {tickets: ['T8'], pace: 0.5, mode: 'scripted'});
-  await loadRun(run_id);
-};
 
-$('start').onclick = async () => {
-  entries.clear(); $('timeline').innerHTML = '<div class="empty">Starting…</div>';
-  report('<span class="dim">Run started.</span>');
-  const mode = new URLSearchParams(location.search).get('mode');
-  const pace = Number(new URLSearchParams(location.search).get('pace') || 1.5);
-  const {run_id} = await api('/runs', mode ? {mode, pace} : {pace});
+async function startRun(tickets, label) {
+  const mode = params.get('mode');
+  const body = {tickets, label, pace: PACE};
+  if (mode && label !== 'first' && label !== 'again') body.mode = mode;
+  const {run_id} = await api('/runs', body);
   await loadRun(run_id);
-};
+}
+
+function showRollback(r) {
+  if (!r.ok) return notice(esc(r.error));
+  notice(`<b>Rolled back.</b> ` + r.undone.map(u => `Step ${u.step} ${esc(u.tool)} undone: ${esc(u.compensation)}${u.amount_cents ? ' of ' + money(u.amount_cents) : ''}.`).join(' ') + ' ' +
+    r.not_undone.map(u => `<span style="color:var(--hold-tx)">Step ${u.step} ${esc(u.tool)}: ${esc(u.follow_up)}.</span>`).join(' '));
+}
+
+$('runs').onchange = ev => loadRun(ev.target.value);
+$('full').onclick = () => startRun(null, 'full queue');
 $('kill').onclick = async () => {
-  const r = await api(`/runs/${runId}/kill`, {by: 'human:dana', reason: 'Stopped by reviewer from the console'});
-  report(`<div><b>Killed.</b> ${r.revoked} unused warrant(s) revoked, ${r.approvals_cancelled || 0} pending approval(s) cancelled. The agent's next call is refused.</div>`);
+  const r = await api(`/runs/${runId}/kill`, {by: 'human:dana', reason: 'Stopped by the reviewer'});
+  notice(`<b>Killed.</b> ${r.revoked} unused warrant(s) revoked, ${r.approvals_cancelled || 0} pending approval(s) cancelled. The agent's next call is refused.`);
 };
-$('rollback').onclick = async () => {
-  const r = await api(`/runs/${runId}/rollback`, {by: 'human:dana'});
-  if (!r.ok) return report(`<div>${esc(r.error)}</div>`);
-  report(`<div><b>Rolled back.</b></div>` +
-    r.undone.map(u => `<div>✓ step ${u.step} ${esc(u.tool)}: ${esc(u.compensation)}${u.amount_cents ? ' (' + money(u.amount_cents) + ')' : ''}</div>`).join('') +
-    r.not_undone.map(u => `<div style="color:var(--amber)">✗ step ${u.step} ${esc(u.tool)}: ${esc(u.follow_up)}</div>`).join(''));
-};
+$('rollback').onclick = async () => showRollback(await api(`/runs/${runId}/rollback`, {by: 'human:dana'}));
 $('verify').onclick = async () => {
   const v = await api(`/runs/${runId}/verify`);
-  report(v.ok ? `<div><b style="color:var(--green)">Chain intact.</b> ${v.entries} entries, head <span class="mono">${v.head.slice(0, 16)}…</span></div>`
-              : `<div><b style="color:var(--red)">Chain broken at entry ${v.broken_at}.</b> ${esc(v.why)}</div>`);
+  notice(v.ok ? `<b style="color:var(--ok-tx)">Ledger intact.</b> ${v.entries} entries, chain head <span class="mono">${v.head.slice(0, 16)}…</span>`
+              : `<b style="color:var(--no-tx)">Ledger altered at entry ${v.broken_at}.</b> ${esc(v.why)}`);
 };
-$('reset').onclick = async () => { await api('/reset', {}); location.reload(); };
+$('reset').onclick = async () => {
+  notice('Resetting. Waiting for Atlas to drop this session\'s rulings from the search index…');
+  await api('/reset', {});
+  location.reload();
+};
 $('timeline').onclick = ev => {
-  const row = ev.target.closest('.row');
-  if (row) $('detail').textContent = JSON.stringify(entries.get(row.dataset.id), null, 2);
+  const row = ev.target.closest('.step');
+  if (!row) return;
+  const n = Number(row.dataset.step);
+  open.has(n) ? open.delete(n) : open.add(n);
+  renderTimeline();
 };
+
+/* ---------- approvals: buttons and voice ---------- */
 $('approvals').onclick = async ev => {
   const talk = ev.target.closest('button[data-v]');
   if (talk) return brief(talk.closest('.card').dataset.id, talk.dataset.v === 'text');
@@ -228,8 +369,8 @@ $('approvals').onclick = async ev => {
   if (!button) return;
   const card = button.closest('.card');
   try {
-    await api(`/approvals/${card.dataset.id}/decision`, {approver: 'human:sam', decision: button.dataset.d, channel: 'web', note: card.querySelector('input.note').value});
-  } catch (e) { report(`<div>${esc(e.message)}</div>`); }
+    await api(`/approvals/${card.dataset.id}/decision`, {approver: 'human:sam', decision: button.dataset.d, channel: 'web', note: card.querySelector('input.reason').value});
+  } catch (e) { notice(esc(e.message)); }
 };
 $('approvals').onkeydown = ev => {
   if (ev.key !== 'Enter' || !ev.target.classList.contains('say') || !voice.session) return;
@@ -241,23 +382,30 @@ $('approvals').onkeydown = ev => {
   document.querySelector('input.say')?.focus();
 };
 
-// Voice step-up: an ElevenLabs agent briefs the approver from the approval request and its closest
-// precedent, then submits the spoken decision through a client tool. The policy is the control.
-// Voice is a channel, and the transcript is evidence. The decision still goes through the same API.
+// Voice step-up. An ElevenLabs agent briefs the approver from the approval request and its closest
+// precedent, then submits the decision through a client tool. The policy is the control. Voice is a
+// channel, the challenge code ties it to this screen, and the transcript is stored as evidence.
 async function endBrief() {
   const session = voice.session;
-  voice = {id: null, lines: [], session: null, textOnly: false};
+  voice = {id: null, lines: [], session: null, textOnly: false, mode: ''};
   renderApprovals();
   try { await session?.endSession(); } catch (e) {}
 }
 
 async function brief(approvalId, textOnly) {
-  if (voice.session) { const same = voice.id === approvalId; await endBrief(); if (same) return; }
+  if (voice.id) { const same = voice.id === approvalId && voice.textOnly === textOnly; await endBrief(); if (same) return; }
   const a = approvals.get(approvalId), q = a.request, top = (a.precedents || [])[0];
-  voice = {id: approvalId, lines: [], session: null, textOnly};
+  voice = {id: approvalId, lines: [], session: null, textOnly, mode: ''};
   renderApprovals();
   const amount = q.args.amount_cents ? money(q.args.amount_cents) : '';
-  const line = (who, text) => { voice.lines.push({who, text}); if (voice.id === approvalId) { const typed = document.querySelector('input.say')?.value; renderApprovals(); const box = document.querySelector('input.say'); if (box) { box.value = typed || ''; box.focus(); } const t = document.querySelector('.talk'); if (t) t.scrollTop = t.scrollHeight; } };
+  const redraw = () => {
+    if (voice.id !== approvalId) return;
+    const typed = document.querySelector('input.say')?.value, reason = document.querySelector('input.reason')?.value;
+    renderApprovals();
+    const box = document.querySelector('input.say'); if (box) { box.value = typed || ''; box.focus(); }
+    const r = document.querySelector('input.reason'); if (r) r.value = reason || '';
+  };
+  const line = (who, text) => { if (text) { voice.lines.push({who, text}); redraw(); } };
   try {
     const {Conversation} = await import('https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.36.1/+esm');
     let conversationId = null;
@@ -274,7 +422,7 @@ async function brief(approvalId, textOnly) {
         rule: q.explanation,
         agent_reason: q.reason,
         customer_note: q.note || 'none',
-        precedent: top ? `a similar request, ${top.amount_cents ? money(top.amount_cents) : ''}, was ${top.decision} by ${String(top.decided_by || '').replace('human:', '')}. ${top.outcome_note || ''}` : 'none found',
+        precedent: top ? `a similar request${top.amount_cents ? ' of ' + money(top.amount_cents) : ''} was ${top.decision} by ${who(top.decided_by)}. ${top.outcome_note || ''}` : 'none found',
       },
       clientTools: {
         submit_decision: async ({decision, reason, challenge_code}) => {
@@ -284,33 +432,72 @@ async function brief(approvalId, textOnly) {
               evidence: {provider: 'elevenlabs', conversation_id: conversationId, challenge_code: String(challenge_code),
                          mode: textOnly ? 'text' : 'voice',
                          transcript: voice.lines.map(l => `${l.who}: ${l.text}`).join(' | ').slice(-900)}});
-            report(`<div><b>${esc(decision)} by voice.</b> “${esc(reason)}” <span class="dim">conversation ${esc(conversationId || '')}</span></div>`);
-            setTimeout(endBrief, 4500);
+            notice(`<b>${esc(decision)} by voice.</b> “${esc(reason)}” <span class="muted mono">${esc(conversationId || '')}</span>`);
+            setTimeout(endBrief, 3500);
             return 'success: the decision is recorded';
           } catch (e) { return `error: ${e.message}`; }
         },
       },
-      onConnect: ({conversationId: id}) => { conversationId = id; },
+      onConnect: ({conversationId: id}) => { conversationId = id; redraw(); },
+      onModeChange: m => { voice.mode = m?.mode || ''; redraw(); },
       onMessage: m => line((m.source ?? m.role) === 'user' ? 'You' : 'Desk', m.message ?? m.text ?? ''),
       onError: e => line('Error', typeof e === 'string' ? e : (e?.message || 'connection error')),
-      onDisconnect: () => { if (voice.id === approvalId && voice.session) line('Desk', '(call ended)'); },
+      onDisconnect: () => { if (voice.id === approvalId) { voice.mode = ''; redraw(); } },
     });
+    redraw();
   } catch (e) { line('Error', e.message || String(e)); }
 }
 
+/* ---------- presenter stepper: the demo in five keys ---------- */
+const byLabel = label => runList.filter(r => r.label === label).sort((a, b) => a.started_at < b.started_at ? -1 : 1);
+function stepperState() {
+  const first = byLabel('first')[0], queue = byLabel('queue')[0], again = byLabel('again')[0];
+  const pending = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId);
+  return [
+    {key: 1, title: 'Send a $300 request', sub: 'Under every limit. It goes through.', enabled: true, done: !!first, run: () => startRun(LATE, 'first')},
+    {key: 2, title: 'Run the queue', sub: 'Allowed, refused, and one for a human.', enabled: true, done: !!queue, run: () => startRun(DEMO_QUEUE, 'queue')},
+    {key: 3, title: 'A human rules', sub: cfg.elevenlabs_agent_id ? 'By voice, with a challenge code.' : 'Give a reason and decide.', enabled: pending.length > 0, done: learned.length > 0,
+     run: () => cfg.elevenlabs_agent_id ? brief(pending[0]._id, false) : document.querySelector('input.reason')?.focus()},
+    {key: 4, title: 'Send the $300 request again', sub: learned.length ? 'Atlas has indexed the ruling.' : 'Waits until Atlas has the ruling.', enabled: learned.length > 0, done: !!again, run: () => startRun(LATE, 'again')},
+    {key: 5, title: 'Undo the first one', sub: 'Roll back the refund that got through.', enabled: !!first && first.status === 'completed', done: !!first && first.status === 'rolled_back',
+     run: async () => { await loadRun(first._id); showRollback(await api(`/runs/${first._id}/rollback`, {by: 'human:dana'})); }},
+  ];
+}
+function renderStepper() {
+  const steps = stepperState(), next = steps.find(s => !s.done && s.enabled);
+  $('stepper').innerHTML = steps.map(s => `<button class="stepbtn ${s.done ? 'done' : ''} ${s === next ? 'next' : ''}" data-key="${s.key}" ${s.enabled ? '' : 'disabled'}>
+    <kbd>${s.done ? '✓' : s.key}</kbd><div><span>${esc(s.title)}</span><small>${esc(s.sub)}</small></div></button>`).join('');
+}
+async function runStep(key) {
+  const s = stepperState().find(s => s.key === Number(key));
+  if (s && s.enabled) { try { await s.run(); } catch (e) { notice(esc(e.message)); } }
+}
+$('stepper').onclick = ev => { const b = ev.target.closest('.stepbtn'); if (b) runStep(b.dataset.key); };
+document.addEventListener('keydown', ev => {
+  if (ev.target.matches('input, textarea, select') || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (/^[1-5]$/.test(ev.key)) runStep(ev.key);
+});
+
+/* ---------- live feed ---------- */
 const feed = new EventSource('/events');
 feed.onmessage = m => {
-  const {coll, doc} = JSON.parse(m.data);
+  const {coll, op, doc} = JSON.parse(m.data);
   if (!doc) return;
-  if (coll === 'ledger' && doc.run_id === runId) { entries.set(doc._id, doc); renderTimeline(doc._id); }
-  if (coll === 'runs' && doc._id === runId) setRun(doc);
-  if (coll === 'approvals') { approvals.set(doc._id, doc); renderApprovals(); }
+  if (coll === 'ledger' && doc.run_id === runId) { entries.set(doc._id, doc); renderTimeline(doc.step); renderStats(); }
   if (coll === 'runs') listRuns();
-  if (coll === 'precedents') report(`<div><b style="color:var(--amber)">Learned.</b> Precedent <span class="mono">${esc(doc._id)}</span> (${esc(doc.decision)}) was embedded and indexed by Atlas ${doc.seconds == null ? '' : 'in about ' + doc.seconds + ' s'}. The next similar request will find it.</div>${doc.outcome_note ? `<div class="dim">“${esc(doc.outcome_note)}”</div>` : ''}`);
+  if (coll === 'approvals') { approvals.set(doc._id, doc); if (voice.id === doc._id && doc.status !== 'pending') setTimeout(endBrief, 3500); renderApprovals(); }
+  if (coll === 'precedents' && op === 'indexed') {
+    learned.push(doc); renderStepper();
+    notice(`<b style="color:var(--gold)">Learned.</b> Ruling <span class="mono">${esc(doc._id)}</span> (${esc(doc.decision)}) was embedded and indexed by Atlas${doc.seconds == null ? '' : ' in about ' + doc.seconds + ' s'}. No embedding code ran in this app.${doc.outcome_note ? ` “${esc(doc.outcome_note)}”` : ''}`);
+  }
 };
 
-api('/config').then(c => { cfg = c; renderApprovals(); });
-listRuns().then(list => list.length && loadRun(list[0]._id));
+(async () => {
+  cfg = await api('/config');
+  learned = await api('/precedents/learned');
+  const list = await listRuns();
+  if (list.length) await loadRun(list[0]._id); else renderStepper();
+})();
 </script>
 </body>
 </html>

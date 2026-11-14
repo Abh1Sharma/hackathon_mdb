@@ -96,12 +96,12 @@ def search(db, text: str, tool: str | None = None, k: int = 3) -> dict:
 def facts(result: dict, min_score: float) -> dict:
     """What policy sees. `denied_match` is the only field that can change a decision."""
     if not result["hits"]:
-        return {"nearest_decision": None, "denied_match": False, "mode": result["mode"]}
+        return {"nearest_decision": None, "denied_match": False, "mode": result["mode"], "ms": result["ms"]}
     top = result["hits"][0]
     score = top.get("rerank_score")
     confident = score is None or score >= min_score  # fusion mode has no calibrated score, so rank decides
     return {"nearest_id": top["_id"], "nearest_decision": top["decision"], "score": score,
-            "mode": result["mode"], "min_score": min_score,
+            "mode": result["mode"], "min_score": min_score, "ms": result["ms"],
             "denied_match": top["decision"] == "denied" and confident}
 
 
@@ -124,3 +124,19 @@ def wait_until_searchable(db, precedent: dict, timeout: float = 90) -> float | N
             return round(time.time() - t0, 1)
         time.sleep(0.7)
     return None
+
+
+def wait_until_unsearchable(db, removed: list, timeout: float = 30) -> bool:
+    """After deleting precedents, wait until Atlas has dropped them from the index too.
+
+    Without this, a ruling deleted by `reset` can still be found for a few seconds and
+    would tighten a request it should no longer affect.
+    """
+    pending = list(removed)
+    deadline = time.time() + timeout
+    while pending and time.time() < deadline:
+        pending = [p for p in pending
+                   if any(h["_id"] == p["_id"] for h in search(db, p["summary"], tool=p["tool"], k=5)["hits"])]
+        if pending:
+            time.sleep(0.7)
+    return not pending

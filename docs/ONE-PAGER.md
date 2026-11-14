@@ -1,0 +1,58 @@
+# Warrant, on one page
+
+**Problem statement 1: Agents You Can Audit.** Built in a day at Agents in Context Toronto.
+
+## What it is
+
+Warrant sits between an AI agent and its tools. No tool call runs without a warrant: a single-use authorization issued only after the gateway has identified the agent and the human it acts for, and checked the call against policy stored in MongoDB Atlas. Every decision is written to a ledger in the same transaction, so a reviewer can replay a run, stop it and undo it.
+
+## The moment
+
+A $300 refund to someone else's card is under every limit, so it goes through. A human then denies a similar $900 request and says why. The same $300 request, sent again, is stopped, citing that ruling and the human's words. **No rule was edited.**
+
+Rules are the statute. Human decisions are the case law. Both live in Atlas.
+
+## How it works
+
+| Step | What happens | Atlas feature |
+|---|---|---|
+| Decide | Policy documents are evaluated over the call's arguments, the record it touches and the run's history. Default deny | Aggregation over the ledger, schema validation |
+| Record | Decision, warrant (or approval request) and ledger entry commit together | Multi-document transaction, unique and TTL indexes |
+| Search | The closest past human decisions are found in one pipeline | Automated Embedding, `$rankFusion` of `$vectorSearch` and `$search`, then `$rerank` |
+| Learn | A new ruling is embedded by Atlas and searchable about a second later. Search can tighten a decision, never loosen one | Automated Embedding, change streams |
+| Control | Kill refuses the next call. Rollback compensates what can be undone and says what cannot | Change streams, transactions |
+
+## What is different
+
+- **Precedents inside the decision.** A request that passes every rule but resembles one a human refused is sent to a human. Most policy layers only know what someone wrote down.
+- **Warrants bound to the call.** Single use, tied to the tool and a digest of the exact arguments, expiring. A replayed or altered call is refused.
+- **Undo.** Rollback from the ledger, honest about what cannot be reversed.
+- **Beside, not instead of, existing tools.** Per-call policy checks, chained audit logs and kill switches exist elsewhere (for example Microsoft's Agent Governance Toolkit), and Atlas Agent Engine has tool allowlists and budgets. Warrant adds the argument-level, history-aware and precedent-aware layer.
+
+## What is real and what is not
+
+Real: the gateway, policy engine, ledger, search pipeline, voice approval, kill, rollback, a live Claude agent on LangGraph, and 44 acceptance tests that run against the Atlas cluster.
+
+Mocked or limited: the business systems (orders, payments, CRM, email) are collections. Identities are demo keys. The ledger is append-only by convention plus a hash chain, not yet by database role. The similarity threshold is tuned on a small seed set.
+
+## What I would like your view on
+
+**MongoDB search**
+1. We use the `$rerank` score as a threshold inside an authorization decision. Would you stand behind that, or threshold differently?
+2. A new document was searchable about 1.4 seconds after insert. Is there a way to know a specific document is indexed without querying for it?
+
+**MongoDB product**
+3. Agent Engine's policy engine is allowlists and budgets today. Would a layer like this sit beside it or inside it?
+
+**Identity**
+4. Every ledger entry names two principals, the agent and the human it acts for. Would you expect a delegated token to carry that instead?
+
+**Fintech**
+5. What would your risk team need to see before an agent issues refunds under a limit unsupervised? Is "resembles a refused case" a signal they would trust?
+
+**Voice**
+6. Is a spoken approval with an on-screen challenge code enough, or would you want speaker verification?
+
+**Everyone**
+7. What is the first thing you would try to break?
+8. Which twenty seconds would you cut from the demo?

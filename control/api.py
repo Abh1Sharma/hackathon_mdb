@@ -52,6 +52,16 @@ def startup():
     if not _feed_started:
         _feed_started = True
         threading.Thread(target=_feed, daemon=True, name="event-feed").start()
+        threading.Thread(target=_warm, daemon=True, name="warm-search").start()
+
+
+def _warm():
+    """The first search after a quiet period is slow. Pay that cost at start, not on stage."""
+    from gateway import precedents
+    try:
+        precedents.search(get_db(), "refund for goods damaged in transit", tool="payments.refund")
+    except Exception:
+        pass
 
 
 def out(value):
@@ -60,6 +70,7 @@ def out(value):
 
 class StartRun(BaseModel):
     tickets: list[str] | None = None
+    label: str | None = None
     mode: str | None = None  # defaults to WARRANT_AGENT_MODE, else scripted
     pace: float = 1.0
     wait_seconds: float = 300
@@ -96,7 +107,7 @@ def config():
 @app.post("/runs")
 def start_run(body: StartRun):
     db = get_db()
-    run = runs.start(db, seed.AGENT_ID, "Process today's refund queue")
+    run = runs.start(db, seed.AGENT_ID, "Process today's refund queue", label=body.label)
     mode = body.mode or os.environ.get("WARRANT_AGENT_MODE", "scripted")
     if mode == "live":
         from agent import live  # imported lazily: needs the model SDK and an API key
@@ -184,6 +195,13 @@ def similar(approval_id: str):
     if not approval:
         raise HTTPException(404, "no such approval")
     return out({"mode": approval.get("precedent_mode"), "precedents": approval.get("precedents", [])})
+
+
+@app.get("/precedents/learned")
+def learned():
+    """Rulings made since the last reset."""
+    return out(list(get_db().precedents.find({"seeded": False}, {"decision": 1, "outcome_note": 1, "decided_by": 1,
+                                                                 "channel": 1, "created_at": 1})))
 
 
 @app.post("/reset")

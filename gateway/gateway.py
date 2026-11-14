@@ -156,6 +156,7 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
                             "on_behalf_of": ident["on_behalf_of"], "resource": resource, "note": note,
                             "summary": text},
                 "precedents": found["hits"] if found else [], "precedent_mode": found["mode"] if found else None,
+                "precedent_ms": found["ms"] if found else None,
                 # Shown to the logged-in approver. A voice decision must quote it, which ties the voice to them.
                 "challenge": f"{secrets.randbelow(900) + 100}",
                 "created_at": created, "expires_at": created + APPROVAL_TTL}, session=session)

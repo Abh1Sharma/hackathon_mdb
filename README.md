@@ -5,6 +5,10 @@
 Built at **Agents in Context Toronto** (MongoDB x Cerebral Valley), Nov 14 2026.
 Problem statement 1: **Agents You Can Audit**. Everything in this repository was written on the day. The planning docs in `docs/` were committed first, then the code.
 
+![The console: a $300 request stopped because it resembles a ruling a human made seconds earlier](docs/img/console-learned.jpg)
+
+**The moment:** a $300 refund to someone else's card is under every limit, so it goes through. A human denies a similar $900 request and says why. The same $300 request, sent again, is stopped, citing that ruling and the human's words. No rule was edited. One page for judges: [docs/ONE-PAGER.md](docs/ONE-PAGER.md).
+
 ## The idea in three lines
 
 - **Policy is the statute.** Rules are documents in Atlas, evaluated by the gateway outside the model. Default deny. A prompt injection can change what the model wants, not what it is allowed to do.
@@ -65,6 +69,8 @@ Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), and an Atlas cluster on
     ./warrant setup                 # collections, validators, indexes, search indexes, seed
     ./warrant demo --scripted       # control API + console on http://127.0.0.1:8000
 
+In the console, keys 1 to 5 walk the demo: send a $300 request (allowed), run the queue, a human rules on the one that needs it (by voice or by button), send the $300 request again (stopped), undo the first one.
+
 | Command | Does |
 |---|---|
 | `./warrant reset` | Back to a freshly seeded state in about 3 seconds |
@@ -73,13 +79,13 @@ Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), and an Atlas cluster on
 | `./warrant replay [run_id]` | Who, on whose behalf, what, why, which policy version, result, verification |
 | `./warrant verify [run_id]` | Checks the hash chain and reports the first broken entry |
 | `./warrant precedents "<text>"` | The precedent pipeline on its own, with rerank and fusion scores |
-| `uv run --env-file .env pytest` | Acceptance tests against the cluster, in a separate `warrant_test` database |
+| `uv run --env-file .env pytest` | 44 acceptance tests against the cluster, in a separate `warrant_test` database |
 
 ## Layout
 
     gateway/    gateway.py (the gate), policies.py, ledger.py, precedents.py, control.py, killswitch.py, schema.py
     control/    FastAPI control API and the server-sent event feed
-    console/    one HTML page: live ledger, approvals with precedents, Kill, Rollback, Verify
+    console/    one HTML page: run timeline, decision desk with precedents and voice, Kill, Roll back, Verify
     agent/      scripted.py (no model) and live.py (Claude on LangGraph)
     systems/    mock orders, payments, CRM and email
     cli/        setup, reset, demo, replay, verify, precedents
