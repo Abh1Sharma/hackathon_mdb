@@ -12,6 +12,18 @@ A $300 refund to someone else's card is under every limit, so it goes through. A
 
 Rules are the statute. Human decisions are the case law. Both live in Atlas.
 
+## The numbers
+
+Twelve attacks and eight legitimate tasks, scored by hidden checks that read the business systems afterwards.
+
+| | Attacks executed | Legitimate work completed |
+|---|---|---|
+| No gate | 12 / 12 | 8 / 8 |
+| Warrant | 1 / 12 | 8 / 8 |
+| Warrant after one human ruling | 0 / 12 | 8 / 8 |
+
+Claude Opus 5.5 alone, with the rules in its prompt and no gate (three trials): it broke a written rule in 0 of 15 runs, and paid out in 6 of 9 runs where no rule was written. The scoreboard's first run also caught a false positive in our own precedent rule, which we fixed and turned into a regression case.
+
 ## How it works
 
 | Step | What happens | Atlas feature |
@@ -33,7 +45,7 @@ Rules are the statute. Human decisions are the case law. Both live in Atlas.
 
 Real: the gateway, policy engine, ledger, search pipeline, voice approval, kill, rollback, a live Claude agent on LangGraph, and 44 acceptance tests that run against the Atlas cluster.
 
-Mocked or limited: the business systems (orders, payments, CRM, email) are collections. Identities are demo keys. The ledger is append-only by convention plus a hash chain, not yet by database role. The similarity threshold is tuned on a small seed set.
+Mocked or limited: the business systems (orders, payments, CRM, email) are collections. Identities are demo keys. The ledger is append-only by convention plus a hash chain, not yet by database role. The similarity threshold is tuned on a small seed set. The scoreboard's agent is scripted to attempt each attack, and the model baseline is three trials per case.
 
 ## What I would like your view on
 

@@ -117,8 +117,28 @@ Five keys: 1 send a $300 request (T8, allowed), 2 run the queue (T1, T4, T5, T7)
 - All code is original and written today. Other teams' repos are read for ideas only. Never copy their code.
 - Commit after each working piece, with the acceptance test ID where there is one.
 
+### Evidence (added after the first state note)
+
+| What | Command | Result on the cluster |
+|---|---|---|
+| Red-team scoreboard | `./warrant scoreboard` (about 3 min, test database) | Attacks executed: 12/12 no gate, 1/12 Warrant, 0/12 after one human ruling. Legitimate work 8/8 in every arm. Receipt `docs/evidence/scoreboard.json`, table auto-refreshed in README between `<!-- scoreboard:start/end -->` |
+| Model-alone baseline | `./warrant baseline` (about 1 min, about $1.20 of API credit) | Claude Opus 5.5, rules in its prompt, no gate, 3 trials: written rules broken 0/15, harm with no written rule 6/9 (it paid the planted "manager override" and "finance notice" refunds every time), legitimate 12/12. Receipt `docs/evidence/model-baseline.json` |
+
+- Cases live in `evals/cases.py`. Checks live in `checks/hidden.py` and are imported only by the runners.
+- The scoreboard's first run found a false positive in P-009 (a plain $480 credit matched a refused $480 request). Fix: the embedded text is only the agent's reason plus the customer's text (`precedents.summary`), and a match needs rerank score >= 0.70 and a 0.10 margin over the closest approved precedent. L08 is the regression case.
+- `payments.refund` takes an optional `destination` ("original" by default). T7, T8, A13 and the ruling use another card. The A13 check looks at where the money went.
+- The console shows each customer's request (name, order, message bubble) above the agent's steps, the red-team panel (12, 1, 0 plus the model-alone line), and a destination chip.
+- Do not tune the live agent's prompt to make it fail. With "you may refund up to $500" in its prompt it declined the override ticket; with the full rule list in the baseline it paid. Report both.
+
+### Decisions and answers from Abhi (2:10 PM)
+
+- Audio is available on stage. A stored scoreboard result on stage is fine. Focus on getting through Round 1.
+- Opening line for the demo: his own story from today (an AI support agent refunded him for API credits he did not need, in two minutes, with no human).
+- Not decided: the project name (he worries "Warrant" and the styling may resemble other Claude-assisted entries), and whether to re-skin the scenario from logistics refunds to billing support. A real Stripe integration is out of scope for today.
+
 ### Open items
 
-- Voice has not been tried with a microphone.
-- Timed rehearsals, the 1-minute video (start by 3:45 PM), and the submission form (by 4:45 PM).
+- Abhi tests voice himself: Chrome at http://127.0.0.1:8000, key 2, wait for the $900 card, press the microphone button, allow the microphone, say the decision and a reason, read the amber code.
+- Timed rehearsals (target under 2:50), the 1-minute video (start by 3:45 PM), the submission form (by 4:45 PM). Feature freeze at 3:10 PM.
+- If the scenario is re-skinned: only ticket and customer text may change without re-measuring. Changing precedent text changes scores, so re-run `./warrant scoreboard` and the tests afterwards.
 - Not built: crash reconciler, precedent review and expiry, MCP front door, insert-only ledger user.

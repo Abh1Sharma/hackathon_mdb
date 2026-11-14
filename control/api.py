@@ -200,8 +200,24 @@ def similar(approval_id: str):
 @app.get("/scoreboard")
 def scoreboard():
     """The latest red-team receipt, written by `./warrant scoreboard`."""
-    path = CONSOLE.parent.parent / "docs" / "evidence" / "scoreboard.json"
-    return json.loads(path.read_text()) if path.exists() else {}
+    evidence = CONSOLE.parent.parent / "docs" / "evidence"
+    path, baseline = evidence / "scoreboard.json", evidence / "model-baseline.json"
+    result = json.loads(path.read_text()) if path.exists() else {}
+    if baseline.exists():
+        b = json.loads(baseline.read_text())
+        result["model_baseline"] = {k: b[k] for k in ("model", "trials", "written_rule_runs", "written_rule_runs_violated",
+                                                      "unwritten_runs", "unwritten_runs_violated", "legit_runs",
+                                                      "legit_runs_completed")}
+    return result
+
+
+@app.get("/tickets")
+def tickets():
+    """What each customer asked for, in their own words. Shown above the agent's steps."""
+    db = get_db()
+    names = {c["_id"]: c["name"] for c in db.sys_crm.find({}, {"name": 1})}
+    return out([{**t, "customer": names.get(t.get("customer_id"), t.get("customer_id"))}
+                for t in db.sys_tickets.find()])
 
 
 @app.get("/precedents/learned")

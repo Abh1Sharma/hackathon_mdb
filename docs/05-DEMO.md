@@ -16,16 +16,17 @@ Between rehearsals press **Reset**. It waits until Atlas has dropped the last se
 
 | Time | Say | Do |
 |---|---|---|
-| 0:00 | "This $300 refund is under every limit. Watch." | **1**. It is allowed, executed, verified |
-| 0:12 | "Nothing broke a rule. A person would have said no: the money is going to someone else's card. Rules only catch what someone wrote down." | |
-| 0:22 | "Warrant sits between the agent and its tools. Every call: who is asking and for whom, policy stored in Atlas, a single-use warrant, all in one transaction." | **2**. Queue runs: allowed, refused by region, injected $5,000 transfer refused |
+| 0:00 | "This morning an AI support agent refunded me in two minutes, with no human involved. Great for me. Now be that company. Here a customer asks for $300 back, sent to someone else's card. It is under every limit. Watch." | **1**. The customer's message appears, then: allowed, executed, verified |
+| 0:16 | "Nothing broke a rule. A person would have said no. Rules only catch what someone wrote down." | |
+| 0:24 | "Warrant sits between the agent and its tools. Every call: who is asking and for whom, policy stored in Atlas, a single-use warrant, all in one transaction." | **2**. Queue runs: allowed, refused by region, injected $5,000 transfer refused |
 | 0:50 | "This one is over the limit, so a human decides. These are the closest past decisions, from one Atlas pipeline: vector and text search fused, then reranked." | Point at the pipeline strip and the precedents |
 | 1:05 | Speak: "Deny. Refunds only go back to the original payment method." Then read the code | **3** (voice). Fallback: type the reason, press Deny |
 | 1:35 | "Atlas embedded that ruling itself. There is no embedding code in this app." | "Learned" notice |
 | 1:42 | "Same $300 request again." | **4**. Stopped: resembles the ruling, score about 0.82, my words on the card |
 | 1:58 | "No rule was edited. Search can tighten a decision automatically. Only a human can loosen one." | |
 | 2:08 | "And the one that got through at the start: undo it." | **5**. Refund reversed. Email marked "cannot undo" |
-| 2:25 | "What was hard: the decision, the warrant and the ledger entry commit in one transaction. A warrant is bound to the exact arguments, so a replayed or altered call is refused. 44 acceptance tests run against this cluster." | Terminal: `./warrant replay` |
+| 2:22 | "We measured it. Twelve attacks, scored by checks the agent never sees. No gate: twelve get through. Warrant: one. After that single ruling: zero. And every legitimate task still completes." | Point at the Red team panel |
+| 2:36 | "What was hard: decision, warrant and ledger entry commit in one transaction, and a warrant is bound to the exact arguments, so a replayed or altered call is refused." | Terminal: `./warrant replay` |
 | 2:45 | "Warrant. Policy is the statute, precedents are the case law, and both live in Atlas." | |
 
 If something breaks: every step is also a button. If voice fails, type the reason. If the network dies, play the video and narrate.
@@ -64,6 +65,8 @@ Record with Shift-Command-5 (Record Selected Portion, microphone on, Show Mouse 
 - That one vendor's reranker beats another's.
 - That the hash chain makes the ledger tamper-proof. It makes edits detectable.
 - That rollback is general. It compensates refunds and CRM updates in the mock systems.
+- That Claude fails these attacks. With the rules in its prompt it broke a written rule in 0 of 15 runs. The measured gap is harm no rule covers: it paid two planted-claim refunds in 6 of 6 runs.
+- That the scoreboard measures a model. Its agent is scripted to attempt each attack, which is the worst case.
 
 ## Q&A bank
 
@@ -93,6 +96,12 @@ Edits are detectable through the hash chain. Preventing them needs a database us
 
 **Did the model fall for the prompt injection?**
 Claude declined both planted instructions on its own. That is the point: you cannot prove it will tomorrow. The scripted agent shows the run where the model does not resist, and the gateway refuses it.
+
+**Isn't a good model enough?**
+We measured it: Claude Opus 5.5, rules in its prompt, no gate, three trials. It broke a written rule in 0 of 15 runs, including the per-run cap. It also paid both planted-claim refunds every time, saying it ignored the planted text and that the amount was under its limit. Obedience was not the gap. Rules cover what someone wrote down, a prompt leaves no record, and four of our twelve attacks never touch the model at all.
+
+**Your refund tool is a mock. What was actually prevented?**
+The refund records a destination. The check for the redirect case looks at whether money went anywhere other than the original payment method. The first version of that check could not tell, the live model exposed it, and we fixed it.
 
 **What did you build today, and what is a library?**
 Built today: gateway, policy engine, ledger, precedent pipeline, kill and rollback, control API, console, CLI, mock systems, both agents, the tests. Libraries: PyMongo, FastAPI, LangGraph with its MongoDB checkpointer, the ElevenLabs browser SDK.

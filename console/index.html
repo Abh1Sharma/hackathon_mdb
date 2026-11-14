@@ -89,6 +89,12 @@
   .detail .e { display:grid; grid-template-columns:34px 96px minmax(0,1fr); gap:10px; color:var(--text2); padding:2px 0; }
   .detail pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font:12px/1.45 var(--mono); color:var(--text2); max-height:220px; overflow:auto; }
 
+  .ticket { display:grid; grid-template-columns:30px minmax(0,1fr); gap:10px; padding:14px 8px 6px; }
+  .ticket .av { width:28px; height:28px; border-radius:50%; background:var(--inset); border:1px solid var(--line2); display:grid; place-items:center; font:600 13px/1 var(--sans); color:var(--text2); }
+  .ticket .from { font-size:13px; }
+  .ticket .msg { margin-top:5px; display:inline-block; max-width:92%; padding:8px 12px; border-radius:4px 14px 14px 14px; background:var(--inset); border:1px solid var(--line); color:var(--text); font-size:13.5px; }
+  .ticket + .step { border-top:0; }
+
   /* decision desk */
   .card { border:1px solid var(--hold-bd); border-radius:12px; padding:16px; background:linear-gradient(180deg, rgba(76,33,0,.38), rgba(76,33,0,.10)); animation:rowin 600ms ease-out; }
   .card + .card { margin-top:14px; }
@@ -190,7 +196,7 @@ const PACE = Number(params.get('pace') || 0.5);
 const DEMO_QUEUE = ['T1', 'T4', 'T5', 'T7'], LATE = ['T8'];
 
 let runId = null, runList = [], entries = new Map(), approvals = new Map(), cfg = {}, open = new Set();
-let learned = [], notices = [];
+let learned = [], notices = [], tickets = new Map();
 let voice = {id: null, lines: [], session: null, textOnly: false, mode: ''};
 
 async function api(path, body) {
@@ -247,25 +253,54 @@ function stepChips(s) {
   return out.join('<span class="arrow">›</span>');
 }
 
+// Which customer request a step belongs to: named in the call, or in the agent's stated reason.
+function ticketOf(s) {
+  for (const e of s.entries) {
+    const id = e.payload?.args?.ticket_id || (String(e.reason || '').match(/ticket (T\d+)/) || [])[1];
+    if (id) return id;
+  }
+  return null;
+}
+function ticketHeader(id) {
+  const t = tickets.get(id);
+  if (!t) return '';
+  const asks = t.requested_refund_cents ? `asks for ${money(t.requested_refund_cents)}${t.destination ? ' to ' + t.destination : ''}` : 'asks for help';
+  return `<div class="ticket"><div class="av">${esc(String(t.customer || '?')[0])}</div><div>
+    <div class="from"><b>${esc(t.customer)}</b> <span class="muted">· order ${esc(t.order_id)} · ${esc(asks)}</span></div>
+    <div class="msg">${esc(t.customer_note)}</div></div></div>`;
+}
+
 function renderTimeline(flashStep) {
   const list = rows();
   if (!list.length) return;
+  let current = null;
   $('timeline').innerHTML = list.map(s => {
+    let header = '';
+    if (!s.control) {
+      const id = ticketOf(s);
+      if (id && id !== current) { current = id; header = ticketHeader(id); }
+    }
+    return header + rowHtml(s, flashStep);
+  }).join('');
+  if (flashStep != null) $('timeline').scrollTop = $('timeline').scrollHeight;
+}
+
+function rowHtml(s, flashStep) {
+  {
     if (s.control) {
       const e = s.control, p = e.payload || {};
       return `<div class="banner"><b>Run killed by ${esc(who(e.actor))}.</b> ${esc(e.reason || '')} · ${p.warrants_revoked || 0} unused warrant(s) revoked</div>`;
     }
     const first = s.entries.find(e => e.type === 'decision') || s.entries[0];
-    const amount = first.payload?.args?.amount_cents;
+    const amount = first.payload?.args?.amount_cents, dest = first.payload?.args?.destination;
     const detail = !open.has(s.step) ? '' : `<div class="detail">${s.entries.map(e =>
         `<div class="e mono"><span>#${e.seq}</span><span>${esc(e.type)}</span><span>${esc(e.prev_hash.slice(0, 10))}… → ${esc(e.hash.slice(0, 10))}…</span></div>`).join('')}
         <pre>${esc(JSON.stringify(s.entries.map(e => ({seq: e.seq, type: e.type, actor: e.actor, on_behalf_of: e.on_behalf_of, decision: e.decision, policy_refs: e.policy_refs, precedent_refs: e.precedent_refs, warrant_id: e.warrant_id, payload: e.payload})), null, 2))}</pre></div>`;
     return `<div class="step ${s.step === flashStep ? 'new' : ''}" data-step="${s.step}">
       <div class="n">${s.step}</div>
-      <div><div class="line1"><span class="tool">${esc(s.tool || '')}</span>${amount ? `<span class="amt">${money(amount)}</span>` : ''}${stepChips(s)}</div>
+      <div><div class="line1"><span class="tool">${esc(s.tool || '')}</span>${amount ? `<span class="amt">${money(amount)}</span>` : ''}${dest && dest !== 'original' ? chip('dim', 'to ' + dest) + '<span class="arrow">›</span>' : ''}${stepChips(s)}</div>
       <div class="why">${esc(first.reason || '')}</div></div></div>${detail}`;
-  }).join('');
-  if (flashStep != null) $('timeline').scrollTop = $('timeline').scrollHeight;
+  }
 }
 
 function renderStats() {
@@ -295,7 +330,7 @@ function renderApprovals() {
           <span class="mono muted">${esc(p._id)}${p.rerank_score != null ? ' · rerank ' + Number(p.rerank_score).toFixed(2) : ''}</span></div>
         ${p.amount_cents ? `<b>${money(p.amount_cents)}</b> · ` : ''}${esc(p.summary)}<div class="said">${esc(who(p.decided_by))}: “${esc(p.outcome_note || '')}”</div></div>`).join('');
     return `<div class="card" data-id="${esc(a._id)}">
-      <h3>${q.args.amount_cents ? money(q.args.amount_cents) : ''} ${esc(q.tool)} <small>step ${a.step}</small></h3>
+      <h3>${q.args.amount_cents ? money(q.args.amount_cents) : ''} ${esc(q.tool)} ${q.args.destination && q.args.destination !== 'original' ? chip('dim', 'to ' + q.args.destination) : ''}<small>step ${a.step}</small></h3>
       <p><b>${esc(q.rule)}</b> ${esc(q.explanation)}</p>
       <p>${esc(who(q.agent_id))} on behalf of ${esc(who(q.on_behalf_of))}: ${esc(q.reason)}</p>
       ${q.note ? `<p class="note">“${esc(q.note)}”</p>` : ''}
@@ -465,11 +500,11 @@ function stepperState() {
   const first = byLabel('first')[0], queue = byLabel('queue')[0], again = byLabel('again')[0];
   const pending = [...approvals.values()].filter(a => a.status === 'pending' && a.run_id === runId);
   return [
-    {key: 1, title: 'Send a $300 request', sub: 'Under every limit. It goes through.', enabled: true, done: !!first, run: () => startRun(LATE, 'first')},
-    {key: 2, title: 'Run the queue', sub: 'Allowed, refused, and one for a human.', enabled: true, done: !!queue, run: () => startRun(DEMO_QUEUE, 'queue')},
+    {key: 1, title: 'A customer asks for $300', sub: 'To someone else\'s card. Under every limit, so it is paid.', enabled: true, done: !!first, run: () => startRun(LATE, 'first')},
+    {key: 2, title: 'The support queue', sub: 'Allowed, refused, and one for a human.', enabled: true, done: !!queue, run: () => startRun(DEMO_QUEUE, 'queue')},
     {key: 3, title: 'A human rules', sub: cfg.elevenlabs_agent_id ? 'By voice, with a challenge code.' : 'Give a reason and decide.', enabled: pending.length > 0, done: learned.length > 0,
      run: () => cfg.elevenlabs_agent_id ? brief(pending[0]._id, false) : document.querySelector('input.reason')?.focus()},
-    {key: 4, title: 'Send the $300 request again', sub: learned.length ? 'Atlas has indexed the ruling.' : 'Waits until Atlas has the ruling.', enabled: learned.length > 0, done: !!again, run: () => startRun(LATE, 'again')},
+    {key: 4, title: 'The same $300 request again', sub: learned.length ? 'Atlas has indexed the ruling.' : 'Waits until Atlas has the ruling.', enabled: learned.length > 0, done: !!again, run: () => startRun(LATE, 'again')},
     {key: 5, title: 'Undo the first one', sub: 'Roll back the refund that got through.', enabled: !!first && first.status === 'completed', done: !!first && first.status === 'rolled_back',
      run: async () => { await loadRun(first._id); showRollback(await api(`/runs/${first._id}/rollback`, {by: 'human:dana'})); }},
   ];
@@ -512,12 +547,14 @@ async function loadScoreboard() {
   $('rt').innerHTML = `<div class="arm bad"><b>${none.attacks_executed}</b><span>no gate</span></div><span class="to">→</span>
     <div class="arm mid"><b>${gate.attacks_executed}</b><span>Warrant</span></div><span class="to">→</span>
     <div class="arm good"><b>${after.attacks_executed}</b><span>after one human ruling</span></div>
-    <p>Attacks that executed, out of ${r.attacks}. Legitimate work completed: ${after.legit_completed} of ${r.legit} in every arm. No policy was edited between the last two. <span class="muted">Run at ${esc(at)} on commit ${esc(r.commit)}.</span></p>`;
+    <p>Attacks that executed, out of ${r.attacks}. Legitimate work completed: ${after.legit_completed} of ${r.legit} in every arm. No policy was edited between the last two. <span class="muted">Run at ${esc(at)} on commit ${esc(r.commit)}.</span></p>
+    ${r.model_baseline ? `<p><b>${esc(r.model_baseline.model)} alone</b>, rules in its prompt, no gate: broke a written rule in ${r.model_baseline.written_rule_runs_violated} of ${r.model_baseline.written_rule_runs} runs, and paid out in ${r.model_baseline.unwritten_runs_violated} of ${r.model_baseline.unwritten_runs} where no rule was written.</p>` : ''}`;
 }
 
 (async () => {
   loadScoreboard();
   cfg = await api('/config');
+  (await api('/tickets')).forEach(t => tickets.set(t._id, t));
   learned = await api('/precedents/learned');
   const list = await listRuns();
   if (list.length) await loadRun(list[0]._id); else renderStepper();
