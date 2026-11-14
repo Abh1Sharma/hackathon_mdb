@@ -2,6 +2,20 @@
 
 Status: **proposed, waiting for Abhi's confirmation.** Where this file conflicts with `02-SPEC.md`, `03-ARCHITECTURE.md` or `04-BUILD-PLAN.md`, this file wins.
 
+Known as of 11:35 AM: solo entry, staying through the finals, own Anthropic key for the demo agent, ElevenLabs credits and headset still pending.
+
+## Verified on the sandbox cluster (11:30 AM, throwaway database `warrant_check`)
+
+| Check | Result |
+|---|---|
+| Cluster | M10, MongoDB 9.0.7, AWS US_WEST_1, user is `atlasAdmin`, venue IP allowed |
+| `autoEmbed` vector index (voyage-4) | Created, not blocked by org policy. Queryable about 3 minutes after the first search index on the cluster |
+| `$vectorSearch` with query text | Works. T6-style query returns the denied "manager override" precedent first (0.81), then approved ones (0.75, 0.74). Scores are close together, so they are a poor threshold on their own |
+| Atlas Search index and `$search` | Works. Same precedent first |
+| `$rankFusion` (vector + text, filter on tool) | Works. Top 2 are both denied social-engineering precedents. A benign late-delivery query returns only approved precedents |
+| `$rerank` | Blocked with 403 until "Native Reranking" is switched on in Project Settings. Until then P-009 uses a rank rule: the top fused precedent is a denial |
+| Transactions, change streams, pre-images, validator | Not yet run. `scripts/check_sandbox.py` covers them once the password is in `.env` |
+
 ## Decision
 
 Stay on **Problem Statement 1, "Agents You Can Audit"**, and build Warrant. Change one thing: **search stops being a stretch goal and becomes the second half of the product.**
@@ -43,6 +57,16 @@ $rankFusion
 **The governance rule that makes this defensible:** *search can tighten automatically, only a human can loosen.* A precedent can never turn a deny into an allow or a step-up into an allow. If search errors or times out, the result is step-up (fail closed). Search is a fact provider. The policy engine still decides.
 
 **New demo ticket T6:** a $480 Ontario refund. It passes every deterministic rule. The customer note says a manager override applies and verification should be skipped. The gateway raises it to step-up: "resembles denied precedent PR-014, score 0.9". This is the moment for the search judges.
+
+## Voice (ElevenLabs), the one stretch
+
+The approver's spoken reason is the richest "why" in the whole system, so voice feeds the precedent engine instead of sitting beside it:
+
+1. Policy escalates. A voice agent briefs the approver from the approval request and reads the closest precedent ("a similar $1,150 refund was approved last month with a carrier damage report").
+2. The approver answers in a sentence and reads the challenge code shown in the console.
+3. The decision and the transcript go on the approval. **The spoken reason becomes the text of the new precedent**, so the next similar request retrieves the human's own words.
+
+Built only after the M3 gate is green, with the button path always working. Needs ElevenLabs credits and a headset.
 
 ## Requirements added
 
