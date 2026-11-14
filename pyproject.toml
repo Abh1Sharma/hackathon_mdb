@@ -5,6 +5,9 @@ description = "No agent action without a warrant: MongoDB Atlas as the identity,
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.162.7",
+    "langchain-anthropic>=1.7.10",
+    "langgraph>=1.2.22",
+    "langgraph-checkpoint-mongodb>=0.5.1",
     "pymongo>=4.11",
     "uvicorn>=0.54.0",
 ]
