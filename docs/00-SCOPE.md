@@ -1,6 +1,6 @@
 # 00 Scope lock (written on build day, after hacking opened)
 
-Status: **proposed, waiting for Abhi's confirmation.** Where this file conflicts with `02-SPEC.md`, `03-ARCHITECTURE.md` or `04-BUILD-PLAN.md`, this file wins.
+Status: **locked.** Where this file conflicts with `02-SPEC.md`, `03-ARCHITECTURE.md` or `04-BUILD-PLAN.md`, this file wins.
 
 Known so far: solo entry, staying through the finals, own Anthropic key for the demo agent, ElevenLabs credits and headset still pending.
 

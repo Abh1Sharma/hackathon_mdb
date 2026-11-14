@@ -56,3 +56,36 @@ def test_at16_ordinary_requests_match_approved_precedents(indexed):
 def test_tool_filter_is_applied(indexed):
     hits = precedents.search(indexed, ticket_text("T6"), tool="payments.refund", k=5)["hits"]
     assert {h["tool"] for h in hits} == {"payments.refund"}
+
+
+def test_at14_override_refund_is_raised_to_step_up_by_precedent(indexed):
+    from agent import scripted
+    from gateway import ledger
+
+    out = scripted.run_queue(indexed, ["T6"])
+    result = out["outcomes"]["T6"]
+    assert result["code"] == "STEP_UP_PENDING" and result["rule"] == "P-009"
+    assert indexed.sys_payments.count_documents({}) == 0
+    decision = [e for e in ledger.entries(indexed, out["run_id"]) if e.get("tool") == "payments.refund"][0]
+    assert decision["decision"] == "step_up" and {"id": "P-009", "version": 1} in decision["policy_refs"]
+    assert decision["precedent_refs"][0]["decision"] == "denied"
+    assert decision["payload"]["precedent"]["score"] >= decision["payload"]["precedent"]["min_score"]
+
+    # The same call with the precedent policy retired is an ordinary allowed refund (P-002).
+    from cli import seed
+    seed.reset(indexed)
+    indexed.policies.update_one({"_id": "P-009"}, {"$set": {"status": "retired"}})
+    assert scripted.run_queue(indexed, ["T6"])["outcomes"]["T6"]["ok"] is True
+
+
+def test_at13_step_up_request_carries_precedents(indexed):
+    from agent import scripted
+    from gateway import ledger
+
+    out = scripted.run_queue(indexed, ["T3"])
+    assert out["outcomes"]["T3"]["code"] == "STEP_UP_PENDING" and out["outcomes"]["T3"]["rule"] == "P-003"
+    approval = indexed.approvals.find_one({"_id": out["outcomes"]["T3"]["approval_id"]})
+    assert approval["status"] == "pending" and len(approval["precedents"]) == 3
+    assert approval["precedents"][0]["decision"] == "approved" and "rerank_score" in approval["precedents"][0]
+    decision = [e for e in ledger.entries(indexed, out["run_id"]) if e.get("decision") == "step_up"][0]
+    assert [r["id"] for r in decision["precedent_refs"]] == [p["_id"] for p in approval["precedents"]]
