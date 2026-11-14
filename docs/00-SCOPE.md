@@ -1,10 +1,10 @@
-# 00 Scope lock (written 11:20 AM on build day)
+# 00 Scope lock (written on build day, after hacking opened)
 
 Status: **proposed, waiting for Abhi's confirmation.** Where this file conflicts with `02-SPEC.md`, `03-ARCHITECTURE.md` or `04-BUILD-PLAN.md`, this file wins.
 
-Known as of 11:35 AM: solo entry, staying through the finals, own Anthropic key for the demo agent, ElevenLabs credits and headset still pending.
+Known so far: solo entry, staying through the finals, own Anthropic key for the demo agent, ElevenLabs credits and headset still pending.
 
-## Verified on the sandbox cluster (11:30 AM, throwaway database `warrant_check`)
+## Verified on the sandbox cluster (build day morning, throwaway database `warrant_check`)
 
 | Check | Result |
 |---|---|
