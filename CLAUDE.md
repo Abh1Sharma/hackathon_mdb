@@ -140,5 +140,5 @@ Five keys: 1 send a $300 request (T8, allowed), 2 run the queue (T1, T4, T5, T7)
 
 - Abhi tests voice himself: Chrome at http://127.0.0.1:8000, key 2, wait for the $900 card, press the microphone button, allow the microphone, say the decision and a reason, read the amber code.
 - Timed rehearsals (target under 2:50), the 1-minute video (start by 3:45 PM), the submission form (by 4:45 PM). Feature freeze at 3:10 PM.
-- If the scenario is re-skinned: only ticket and customer text may change without re-measuring. Changing precedent text changes scores, so re-run `./warrant scoreboard` and the tests afterwards.
+- If the scenario is re-skinned: company and customer names can change freely. Ticket notes, agent reasons and precedent text are what search compares, so changing any of them changes scores. Re-run `./warrant scoreboard` and the tests afterwards.
 - Not built: crash reconciler, precedent review and expiry, MCP front door, insert-only ledger user.
