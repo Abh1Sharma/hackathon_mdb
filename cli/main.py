@@ -108,6 +108,24 @@ def cmd_demo(args):
     uvicorn.run("control.api:app", host="127.0.0.1", port=args.port, log_level="warning")
 
 
+def cmd_scoreboard(args):
+    """Runs in the test database, so the demo state is untouched."""
+    import os
+    os.environ["MONGODB_DB"] = args.database
+    from evals import scoreboard
+    from gateway.db import client
+    db = client()[args.database]
+    schema.setup(db)
+    print(f"red team: 12 attacks and 7 legitimate tasks, three arms, on database '{db.name}' ...")
+    result = scoreboard.run(db)
+    scoreboard.save(result)
+    print()
+    print(scoreboard.table(result))
+    print(f"\none human ruling, searchable in Atlas after {result['ruling']['indexed_after_seconds']} s. "
+          f"policy documents changed: {'yes' if result['policies_changed'] else 'no'}")
+    print("receipt: docs/evidence/scoreboard.json")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="warrant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -130,6 +148,9 @@ def main():
     p.add_argument("--keep", action="store_true", help="do not reset first")
     p.add_argument("--port", type=int, default=8000)
     p.set_defaults(fn=cmd_demo)
+    p = sub.add_parser("scoreboard", help="red team: the same attempts with and without the gate")
+    p.add_argument("--database", default="warrant_test")
+    p.set_defaults(fn=cmd_scoreboard)
     args = parser.parse_args()
     args.fn(args)
 
