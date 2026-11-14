@@ -230,6 +230,46 @@ def tickets():
                 for t in db.sys_tickets.find()])
 
 
+WHAT = {
+    "policies": "The written rules. Changing a document changes the next decision.",
+    "identities": "Agents and humans, and who an agent acts for.",
+    "warrants": "Single-use authorizations, bound to one call and its arguments.",
+    "ledger": "Every decision, execution, approval, kill and rollback, hash-chained per run.",
+    "approvals": "Requests waiting for a human, with the challenge code for voice.",
+    "precedents": "Past human decisions. Atlas embeds them itself.",
+    "runs": "One agent run. A change stream on this collection is the kill switch.",
+}
+
+
+@app.get("/atlas")
+def atlas():
+    """What is really in the database: collections, what Atlas enforces on each, and the search pipeline."""
+    from gateway import precedents
+    db = get_db()
+    options = {c["name"]: c.get("options", {}) for c in db.list_collections()}
+    rows = []
+    for name, what in WHAT.items():
+        features = []
+        validator = options.get(name, {}).get("validator", {}).get("$jsonSchema")
+        if validator:
+            strict = validator.get("additionalProperties") is False
+            features.append({"kind": "ok", "text": "$jsonSchema validator" + (", strict" if strict else "")})
+        for index_name, spec in db[name].index_information().items():
+            keys = ", ".join(k for k, _ in spec["key"])
+            if spec.get("unique") and index_name != "_id_":
+                features.append({"kind": "info", "text": f"unique index: {keys}"})
+            if "expireAfterSeconds" in spec:
+                features.append({"kind": "hold", "text": f"TTL index: {keys}"})
+        if name == "precedents":
+            for ix in db.precedents.list_search_indexes():
+                kind = "Vector Search index, autoEmbed voyage-4" if ix["type"] == "vectorSearch" else "Atlas Search index"
+                features.append({"kind": "vio", "text": kind})
+        rows.append({"name": name, "count": db[name].estimated_document_count(), "features": features, "what": what})
+    return out({"database": db.name, "collections": rows,
+                "pipeline": precedents.pipeline("<the agent's stated reason and the customer's text>", tool="payments.refund", k=5),
+                "ledger_validator": options.get("ledger", {}).get("validator", {})})
+
+
 @app.get("/precedents/learned")
 def learned():
     """Rulings made since the last reset."""

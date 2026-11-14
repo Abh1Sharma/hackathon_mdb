@@ -91,7 +91,7 @@ Paste this to start the session at 10:45:
 | Ledger | `gateway/ledger.py` | hash-chained per run, `verify` names the first broken entry |
 | Search | `gateway/precedents.py` | one aggregation: `$rankFusion` of `$vectorSearch` (autoEmbed, voyage-4) and `$search`, then `$rerank` (rerank-2.5). About 330 ms |
 | Control | `gateway/control.py`, `gateway/killswitch.py` | kill, approvals (web or voice with a challenge code), rollback, reconstruct. A human decision becomes a precedent |
-| API and console | `control/api.py`, `console/index.html` | FastAPI plus one HTML page. Change streams feed it over SSE. Keys 1 to 3 walk the demo, 4 undoes the first payment |
+| API and console | `control/api.py`, `console/index.html` | FastAPI plus one HTML page. Change streams feed it over SSE. Keys 1 to 3 walk the demo, 4 undoes the first payment. `GET /atlas` feeds the folded "Inside MongoDB Atlas" section |
 | Agents | `agent/scripted.py`, `agent/live.py` | scripted is the stage default. Live is Claude Opus 5.5 on LangGraph with the MongoDB checkpointer, verified |
 | Voice | `voice/agent.md` | ElevenLabs agent "Warrant Approvals Desk". Its id is in `.env` as `ELEVENLABS_AGENT_ID`, never in the repo. Verified in typed mode only |
 | Red team | `evals/`, `checks/hidden.py`, `./warrant scoreboard` | 12 attacks and 8 legitimate tasks, three arms: 12/12, 1/12, 0/12 executed. Receipt in `docs/evidence/scoreboard.json` |
@@ -115,7 +115,9 @@ The console is light-themed and story-first. It opens with a preamble, "Meet Sam
 | 3 | It never happens again | The same $300 request returns and is held, citing Sam's ruling and his words. No rule was edited |
 | 4 (optional) | Undo the first payment | Rollback of the first run. The refund is reversed and the email is marked cannot undo |
 
-Under the stage: a strip "What MongoDB Atlas did", and two collapsible sections, "Audit trail" (the ledger, kill, roll back, verify, the full support queue) and "Red team" (12, 1, 0 and the model-alone line).
+Under the stage: a strip "What MongoDB Atlas is doing", and three collapsible sections: "Red team" (12, 1, 0 and the model-alone line), "Inside MongoDB Atlas" (live collection counts, what the database enforces on each collection, the real search pipeline and the ledger validator) and "Audit trail" (the ledger, kill, roll back, verify, the full support queue).
+
+Look (3:10 PM, at Abhi's request, modelled on the Magic UI agent template he shared): Geist and Geist Mono from Google Fonts with a system fallback, one blue accent, a hero with a blue glow, three floating context cards with small animated chips, and a "Start with a customer request" button that runs step 1. It is still one plain HTML file with no build step. He asked about moving to Next.js and Tailwind: not today.
 
 The 60-second script is also the 1-minute video. Abhi believes the live slot may be only 1 minute. In order: introduce Sam and press 1 ("It broke no rule, so it was paid. A person would have said no."). Press 2 and deny by voice ("Deny. Refunds only go back to the original payment method. The code is" and the three digits). Say the ruling is now in Atlas and that Atlas embedded it itself. Press 3 ("Stopped. It cites what I said twenty seconds ago. No rule edited, no retraining."). Close on the red-team numbers: 12, 1, 0. With 3 minutes, add the undo, the full queue from Audit trail, Kill, `./warrant replay` and the model-alone result.
 

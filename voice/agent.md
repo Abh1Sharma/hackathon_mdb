@@ -16,7 +16,8 @@ The ⌨ button runs the same agent in typed mode, for a loud room.
 
 ## Agent settings
 
-- First message: `{{approver_name}}, a request needs your decision. {{agent_name}}, acting for {{on_behalf_of}}, wants to {{action}}. {{rule}}. Closest precedent: {{precedent}}. Do you approve or deny?`
+- First message (short, and it cannot be interrupted): `{{approver_name}}, your agent wants to {{action}}. {{rule}}. {{precedent}}. Approve or deny?`
+- Turn taking: patient, with a 15 second turn timeout, so a pause while the approver thinks does not end the turn.
 - Client tool: `submit_decision`, waits for a response, parameters `decision` (approved or denied), `reason`, `challenge_code`.
 - Authentication: off (public agent), so only an agent id is needed in the browser. Turn on an allowlist before leaving it up after the event.
 
