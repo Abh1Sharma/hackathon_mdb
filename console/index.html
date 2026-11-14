@@ -62,7 +62,7 @@
   .bdot { width:7px; height:7px; border-radius:50%; background:#00A35C; box-shadow:0 0 0 4px rgba(0,163,92,.16); }
   .shine { background:linear-gradient(110deg, var(--ink2) 35%, #B4BACB 50%, var(--ink2) 65%); background-size:250% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:shine 4.5s linear infinite; }
   @keyframes shine { from { background-position:120% 0; } to { background-position:-120% 0; } }
-  h1 { font-size:clamp(34px, 4.6vw, 58px); line-height:1.03; letter-spacing:-.045em; font-weight:550; margin:18px auto 14px; max-width:900px; text-wrap:balance; animation:rise .7s cubic-bezier(.2,.8,.2,1) .05s both; }
+  h1 { font-size:clamp(34px, 4.6vw, 58px); line-height:1.03; letter-spacing:-.045em; font-weight:550; margin:18px auto 26px; max-width:900px; text-wrap:balance; animation:rise .7s cubic-bezier(.2,.8,.2,1) .05s both; }
   h1 span { color:var(--muted); }
   .lede { font-size:18px; color:var(--ink2); margin:0 auto 26px; max-width:620px; text-wrap:balance; animation:rise .7s cubic-bezier(.2,.8,.2,1) .12s both; }
   .cta { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:34px; animation:rise .7s cubic-bezier(.2,.8,.2,1) .18s both; }
@@ -78,7 +78,7 @@
   .tcard .k { font-size:15.5px; font-weight:600; letter-spacing:-.015em; display:flex; align-items:center; gap:8px; }
   .tcard .k i { width:8px; height:8px; border-radius:50%; }
   .tcard.c1 .k i { background:#D23A1D; } .tcard.c2 .k i { background:var(--accent); } .tcard.c3 .k i { background:#00A35C; }
-  .tcard p { margin:5px 0 0; color:var(--ink2); font-size:14.5px; }
+  .tcard p { margin:5px 0 0; color:var(--ink2); font-size:15px; }
   .viz { height:104px; border-radius:16px; background:linear-gradient(180deg, #FBFCFE, #F1F4FA); border:1px solid var(--line); margin-bottom:14px; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:center; gap:7px; padding:0 14px; }
   .vbub { align-self:flex-start; max-width:86%; font-size:12.5px; line-height:1.3; padding:7px 11px; border-radius:4px 14px 14px 14px; background:var(--accent); color:#fff; box-shadow:0 6px 14px -8px rgba(36,86,245,.7); }
   .vbub.w { background:#fff; color:var(--ink); border:1px solid var(--line); box-shadow:0 2px 6px -2px rgba(11,13,18,.12); }
@@ -240,73 +240,135 @@
   .rt p { flex-basis:100%; margin:4px 0 0; color:var(--ink2); font-size:14px; } .rt p b { color:var(--ink); }
   #toasts { position:fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:8px; z-index:20; max-width:420px; }
   .toast { background:var(--ink); color:#fff; border-radius:14px; padding:11px 14px; font-size:14px; box-shadow:0 12px 36px -8px rgba(11,13,18,.4); animation:pop .35s ease-out; }
+  /* tabs: the demo first, everything else one click away */
+  #tabs { display:flex; gap:2px; margin-left:16px; padding:3px; border-radius:999px; background:#E8EBF2; }
+  #tabs button { font:500 13.5px/1 var(--sans); padding:8px 14px; border-radius:999px; border:0; background:transparent; color:var(--ink2); cursor:pointer; white-space:nowrap; }
+  #tabs button.on { background:var(--card); color:var(--ink); box-shadow:0 1px 2px rgba(11,13,18,.12); }
+  .pane { display:none; }
+  body[data-tab="demo"] #pane-demo, body[data-tab="atlas"] #pane-atlas, body[data-tab="proof"] #pane-proof, body[data-tab="audit"] #pane-audit { display:block; }
+  .pcard { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:18px 20px; box-shadow:var(--shadow); margin-top:14px; }
+  .phead { display:flex; align-items:baseline; gap:12px; margin:10px 2px 14px; }
+  .phead b { font-size:20px; letter-spacing:-.02em; font-weight:600; }
+  .two { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; }
+  .two .code { max-height:440px; }
+  .tgrid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:5px 16px; margin-top:8px; }
+  .tcase { font:12px/1.5 var(--mono); color:var(--green); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .tcase.no { color:var(--red); }
+
+  /* the picture of the step: customer, agent, checkpoint, payment */
+  #flow { display:flex; align-items:center; margin:12px 0; }
+  .fnode { display:flex; align-items:center; gap:10px; padding:7px 16px 7px 7px; border:1px solid var(--line); border-radius:999px; background:var(--card); box-shadow:0 1px 2px rgba(11,13,18,.04); white-space:nowrap; transition:border-color .35s, background .35s; }
+  .fnode .ic { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:var(--soft); color:var(--muted); transition:background .35s, color .35s; flex:none; }
+  .fnode svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .fnode b { display:block; font-size:13.5px; line-height:1.2; letter-spacing:-.01em; }
+  .fnode span[id] { display:block; font-size:12.5px; line-height:1.25; color:var(--muted); }
+  .fnode.on { border-color:var(--accent-bd); } .fnode.on .ic { background:var(--accent-bg); color:var(--accent); }
+  .fnode.ok { border-color:var(--green-bd); background:var(--green-bg); } .fnode.ok .ic { background:#00A35C; color:#fff; } .fnode.ok span[id] { color:var(--green); font-weight:600; }
+  .fnode.warn { border-color:var(--amber-bd); background:var(--amber-bg); } .fnode.warn .ic { background:#E8A100; color:#fff; } .fnode.warn span[id] { color:var(--amber); font-weight:600; }
+  .fnode.bad { border-color:var(--red-bd); background:var(--red-bg); } .fnode.bad .ic { background:#D23A1D; color:#fff; } .fnode.bad span[id] { color:var(--red); font-weight:600; }
+  .fnode.pulse .ic { animation:ping 1.1s ease-in-out infinite; }
+  @keyframes ping { 0%, 100% { box-shadow:0 0 0 0 rgba(36,86,245,.45); } 50% { box-shadow:0 0 0 9px rgba(36,86,245,0); } }
+  .wire { flex:1; min-width:28px; height:2px; background:var(--line); position:relative; }
+  .wire::after { content:""; position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent); transition:width .7s ease; }
+  .wire.on::after { width:100%; } .wire.bad::after { background:#D23A1D; } .wire.ok::after { background:#00A35C; }
+  .wire.cut { background:repeating-linear-gradient(90deg, #C9CEDA 0 5px, transparent 5px 11px); }
+  .wire.run::before { content:""; position:absolute; top:-3px; left:0; width:8px; height:8px; border-radius:50%; background:var(--accent); animation:travel 1s linear infinite; }
+  @keyframes travel { from { left:0; } to { left:calc(100% - 8px); } }
+
+  /* the document Atlas just stored, shown as the change it is */
+  .doc { margin-top:12px; border-radius:16px; background:#0B0D12; color:#DDE3F3; overflow:hidden; box-shadow:0 14px 30px -18px rgba(11,13,18,.6); }
+  .dh { display:flex; align-items:center; gap:8px; padding:9px 14px; font-size:12.5px; font-weight:600; border-bottom:1px solid rgba(255,255,255,.09); }
+  .dh .mono { color:#9AA4BF; font-weight:400; } .dh b.mono { color:#71F6BA; font-weight:600; }
+  .live { width:8px; height:8px; border-radius:50%; background:#00ED64; box-shadow:0 0 0 3px rgba(0,237,100,.2); }
+  .dbody { padding:9px 14px 7px; font:12px/1.55 var(--mono); }
+  .dl { padding-left:16px; position:relative; word-break:break-word; } .dl i { position:absolute; left:0; color:#00ED64; font-style:normal; }
+  .dk { color:#8FB4FF; } .dv { color:#E8EDEB; }
+  .dl em { display:inline-block; margin-left:8px; font:600 11px/1 var(--sans); color:#0B0D12; background:#71F6BA; border-radius:999px; padding:3px 8px; }
+  .df { padding:8px 14px 10px; font-size:12.5px; color:#71F6BA; border-top:1px solid rgba(255,255,255,.09); }
+  .said { display:flex; flex-direction:column; gap:5px; margin:0 0 2px; }
+  .said .vb { font-size:12.5px; padding:5px 10px; }
+  .quote { font-size:24px; margin:10px 0; }
+  .typed { display:flex; gap:8px; align-items:center; margin-top:10px; }
+  .typed input[type=text] { margin-top:0; flex:1; padding:9px 12px; font-size:14px; }
+  .ract .codebox { margin-top:0; }
+  .rtop .muted { font-size:13.5px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
 </style>
 </head>
-<body>
+<body data-tab="demo">
 <div class="wrap">
   <header>
     <span class="mark">W</span><span class="brand">Warrant</span>
-    <span class="tagline">the checkpoint between an AI agent and the money</span>
+    <nav id="tabs">
+      <button data-tab="demo" class="on">Demo</button>
+      <button data-tab="atlas">MongoDB live</button>
+      <button data-tab="proof">Proof</button>
+      <button data-tab="audit">Audit trail</button>
+    </nav>
     <span class="sp"></span>
     <span class="env"><i></i><span id="envtxt">MongoDB Atlas</span></span>
     <button class="btn ghost sm" id="intro-toggle">Intro</button>
-    <button class="btn ghost sm" id="reset">Reset demo</button>
+    <button class="btn ghost sm" id="reset">Reset</button>
   </header>
 
-  <section id="intro">
-    <div class="intro-full">
-      <div class="badge"><span class="bdot"></span><span class="shine">Agents you can audit, built on MongoDB Atlas</span></div>
-      <h1>Meet Sam. <span>An AI agent now handles refunds for him.</span></h1>
-      <p class="lede">Sam runs payments at a freight company. He wants the agent to move fast, and he wants to be asked only when it matters.</p>
-      <div class="cta"><button class="btn blue lg" id="start">Start with a customer request <kbd>1</kbd></button><span class="muted">Three steps. About a minute.</span></div>
-      <div class="three">
-        <div class="tcard c1">
-          <div class="viz"><div class="vbub a1">Put my $300 refund on my partner's card.</div><span class="vchip bad a2">Paid. No rule was broken.</span></div>
-          <span class="k"><i></i>The problem</span>
-          <p>The agent obeys every written rule and still pays requests nobody wrote a rule for. Afterwards, no one can say who allowed it.</p>
-        </div>
-        <div class="tcard c2">
-          <div class="viz"><span class="vring" style="width:150px;height:150px"></span><span class="vring" style="width:230px;height:230px"></span><span class="vring" style="width:320px;height:320px"></span>
-            <div class="vrow"><span class="vchip n a1">written rules</span><span class="mark">W</span><span class="vchip n a2">past decisions</span></div><span class="vchip ok a3" style="align-self:center">one transaction in Atlas</span></div>
-          <span class="k"><i></i>The checkpoint</span>
-          <p>Warrant sits between the agent and the money. Each action is checked in MongoDB Atlas: the written rules first, then every decision a human has made before.</p>
-        </div>
-        <div class="tcard c3">
-          <div class="viz"><div class="vbub w a1">Sam: “No. Original card only.”</div><span class="vchip ok a2">Next one stopped, 1 second later</span></div>
-          <span class="k"><i></i>The payoff</span>
-          <p>Sam says no once, out loud. Atlas stores it, embeds it and searches it. The next similar request is stopped about a second later. No retraining, no new rule.</p>
+  <div class="pane" id="pane-demo">
+    <section id="intro">
+      <div class="intro-full">
+        <div class="badge"><span class="bdot"></span><span class="shine">Agents you can audit, built on MongoDB Atlas</span></div>
+        <h1>Meet Sam. <span>An AI agent now handles refunds for him.</span></h1>
+        <div class="cta"><button class="btn blue lg" id="start">Start with a customer request <kbd>1</kbd></button></div>
+        <div class="three">
+          <div class="tcard c1">
+            <div class="viz"><div class="vbub a1">Put my $300 refund on my partner's card.</div><span class="vchip bad a2">Paid. No rule was broken.</span></div>
+            <span class="k"><i></i>The problem</span>
+            <p>The agent follows every rule, and still pays what no rule covers.</p>
+          </div>
+          <div class="tcard c2">
+            <div class="viz"><span class="vring" style="width:150px;height:150px"></span><span class="vring" style="width:230px;height:230px"></span><span class="vring" style="width:320px;height:320px"></span>
+              <div class="vrow"><span class="vchip n a1">written rules</span><span class="mark">W</span><span class="vchip n a2">past decisions</span></div><span class="vchip ok a3" style="align-self:center">one transaction in Atlas</span></div>
+            <span class="k"><i></i>The checkpoint</span>
+            <p>Every action is checked in MongoDB Atlas: the rules, then past human decisions.</p>
+          </div>
+          <div class="tcard c3">
+            <div class="viz"><div class="vbub w a1">Sam: “No. Original card only.”</div><span class="vchip ok a2">Next one stopped, 1 second later</span></div>
+            <span class="k"><i></i>The payoff</span>
+            <p>Sam says no once, out loud. The next one is stopped a second later.</p>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <nav id="steps"></nav>
-  <div id="caption"></div>
+    <nav id="steps"></nav>
+    <div id="flow"></div>
+    <main>
+      <section class="panel"><h2>The support conversation</h2><div id="convo"></div></section>
+      <section class="panel"><h2>Sam's review inbox</h2><div id="inbox"></div></section>
+    </main>
+  </div>
 
-  <main>
-    <section class="panel"><h2>The support conversation</h2><div id="convo"></div></section>
-    <section class="panel"><h2>Sam's review inbox</h2><div id="inbox"></div></section>
-  </main>
+  <div class="pane" id="pane-atlas">
+    <div class="phead"><b>Live from MongoDB Atlas</b><span class="muted" id="atlas-where">the hackathon sandbox cluster</span><span class="sp"></span><button class="btn sm" id="atlas-refresh">Refresh</button></div>
+    <div class="tiles" id="tiles"></div>
+    <div id="insidebody"><div class="empty">Loading from Atlas…</div></div>
+  </div>
 
-  <section id="atlas"><h2>What MongoDB Atlas is doing</h2><div class="tiles" id="tiles"></div></section>
+  <div class="pane" id="pane-proof">
+    <section class="pcard"><div class="rt" id="rt"></div></section>
+    <section class="pcard" id="tests" hidden></section>
+  </div>
 
-  <details id="redteam"><summary>Red team <span id="rt-sum">measured with checks the agent never sees</span></summary><div class="rt" id="rt"></div></details>
-
-  <details id="inside"><summary>Inside MongoDB Atlas <span>the collections, what the database itself enforces, and the search pipeline</span></summary><div id="insidebody"><div class="empty">Loading from Atlas…</div></div></details>
-
-  <details id="audit">
-    <summary>Audit trail <span>every decision, who allowed it, and the controls to stop and undo a run</span></summary>
-    <div class="abar">
-      <select id="runsel" title="Which run to show"></select>
-      <button class="btn sm danger" id="kill">Kill run</button>
-      <button class="btn sm" id="rollback">Roll back</button>
-      <button class="btn sm" id="verify">Verify ledger</button>
-      <span class="sp"></span>
-      <button class="btn sm ghost" id="full">Run the full support queue</button>
-    </div>
-    <div id="trail"></div>
-  </details>
+  <div class="pane" id="pane-audit">
+    <section class="pcard">
+      <div class="abar">
+        <select id="runsel" title="Which run to show"></select>
+        <button class="btn sm danger" id="kill">Kill run</button>
+        <button class="btn sm" id="rollback">Roll back</button>
+        <button class="btn sm" id="verify">Verify ledger</button>
+        <span class="sp"></span>
+        <button class="btn sm ghost" id="full">Run the full support queue</button>
+      </div>
+      <div id="trail"></div>
+    </section>
+  </div>
 </div>
 <div id="toasts"></div>
 
@@ -331,6 +393,8 @@ const DEMO = [
 let cfg = {}, score = null, tickets = new Map(), policies = new Map(), runs = new Map(), ledgers = new Map(), approvals = new Map();
 let learned = [], feedEvents = 0, viewStep = 0, auditRunId = null, introOpen = null;
 let voice = {id: null, session: null, textOnly: false, lines: []};
+let atlas = null, baseCount = null;                     // what /atlas returned, and how many precedents were seeded
+const transcripts = new Map(), autoAsked = new Set(), playedHere = new Set();
 const openSteps = new Set(), seen = new Set();
 const fresh = key => seen.has(key) ? '' : (seen.add(key), ' fresh');
 
@@ -392,33 +456,30 @@ function rulesRow(d) {
 function pastRow(d, approval) {
   const p = d.payload.precedent || {};
   if (!('denied_match' in p)) return null;
-  const tech = `<span class="muted">Atlas hybrid search, then rerank${p.ms != null ? ' · ' + p.ms + ' ms' : ''}</span>`;
+  const tech = `<span class="muted">Atlas search${p.ms != null ? ' · ' + p.ms + ' ms' : ''}</span>`;
   const score = p.score != null ? Number(p.score).toFixed(2) : null;
   if (p.denied_match) {
     const top = (approval?.precedents || [])[0] || {};
-    return ['warn', `Resembles a request ${top.seeded === false ? 'Sam' : 'a human'} refused${score ? ' (match ' + score + ')' : ''}.
-      ${top.outcome_note ? `“${esc(top.outcome_note)}”` : ''} ${top.seeded === false ? '<span class="learned">Sam\'s ruling, a moment ago</span>' : ''}<br>${tech}`];
+    return ['warn', `Matches ${top.seeded === false ? 'Sam\'s ruling' : 'a past refusal'}${score ? ' (' + score + ')' : ''}${top.outcome_note ? `: “${esc(top.outcome_note)}”` : '.'} ${tech}`];
   }
-  if (p.mode === 'error') return ['warn', 'The search failed, so the checkpoint fails closed and asks a human.'];
-  const closest = p.nearest_decision === 'approved' ? `The closest past decision was an approval${score ? ' (match ' + score + ')' : ''}.`
-                                                     : `No similar refusal on file${score ? ' (closest match ' + score + ')' : ''}.`;
-  return ['ok', `${closest}<br>${tech}`];
+  if (p.mode === 'error') return ['warn', 'The search failed, so the checkpoint asks a human.'];
+  return ['ok', `${p.nearest_decision === 'approved' ? 'The closest past decision was an approval.' : 'Nothing similar on file.'} ${tech}`];
 }
 function outcomeHtml(c, amount, dest) {
   const to = dest && dest !== 'original' ? ` to ${esc(dest)}` : '', f = fresh('o' + c.run._id + c.status);
   switch (c.status) {
     case 'paid': return c.s.label === 'first'
-      ? `<div class="out bad${f}"><b>${money(amount)} paid${to}.</b><span>No rule was broken, so the money left. A person would have said no.</span></div>`
+      ? `<div class="out bad${f}"><b>${money(amount)} paid${to}.</b><span>No rule was broken. A person would have said no.</span></div>`
       : `<div class="out ok${f}"><b>${money(amount)} paid${to}.</b><span>Verified in the payment system.</span></div>`;
-    case 'reversed': return `<div class="out ok${f}"><b>Reversed. The ${money(amount)} came back.</b><span>The email that was already sent cannot be unsent, and the ledger says so.</span></div>`;
+    case 'reversed': return `<div class="out ok${f}"><b>Reversed. The ${money(amount)} came back.</b><span>The email already sent cannot be unsent, and the ledger says so.</span></div>`;
     case 'held': return c.s.label === 'again'
-      ? `<div class="out ok${f}"><b>Stopped. Nothing is paid.</b><span>A moment ago this exact request was paid. The only thing that changed is Sam's ruling. No rule was edited.</span></div>`
-      : `<div class="out warn${f}"><b>Waiting for Sam. Nothing is paid.</b><span>The agent carries on with other work.</span></div>`;
-    case 'denied': return `<div class="out ok${f}"><b>Sam said no. Nothing was paid.</b>${c.approval?.note ? `<span>“${esc(c.approval.note)}”</span>` : ''}</div>`;
-    case 'approved': return `<div class="out ok${f}"><b>Sam approved it.</b><span>The agent can now spend the warrant.</span></div>`;
+      ? `<div class="out ok${f}"><b>Stopped. Nothing is paid.</b><span>The same request as before. Only Sam's ruling changed. No rule was edited.</span></div>`
+      : `<div class="out warn${f}"><b>Waiting for Sam. Nothing is paid.</b></div>`;
+    case 'denied': return `<div class="out ok${f}"><b>Sam said no. Nothing was paid.</b></div>`;
+    case 'approved': return `<div class="out ok${f}"><b>Sam approved it.</b></div>`;
     case 'refused': return `<div class="out ok${f}"><b>Refused. Nothing was paid.</b></div>`;
-    case 'cancelled': return `<div class="out warn${f}"><b>Cancelled.</b><span>The run was stopped.</span></div>`;
-    default: return `<div class="out wait"><span class="shimmer">Paying, then reading the payment back to verify it…</span></div>`;
+    case 'cancelled': return `<div class="out warn${f}"><b>Cancelled.</b></div>`;
+    default: return `<div class="out wait"><span class="shimmer">Paying, then reading the payment back…</span></div>`;
   }
 }
 function convoHtml(c) {
@@ -426,19 +487,16 @@ function convoHtml(c) {
   const t = c.ticket, a = c.d?.payload?.args || {}, res = c.d?.payload?.resource || {};
   const amount = a.amount_cents ?? t.requested_refund_cents, dest = a.destination ?? t.destination;
   let h = `<div class="msg"><div class="av">${esc(String(t.customer || 'C')[0])}</div><div>
-      <div class="meta"><b>${esc(t.customer || 'Customer')}</b> · customer · order ${esc(res.id || t.order_id || '')}${res.total_cents ? ', ' + money(res.total_cents) + ', ' + esc(res.region) : ''}</div>
+      <div class="meta"><b>${esc(t.customer || 'Customer')}</b> · order ${esc(res.id || t.order_id || '')}${res.total_cents ? ', ' + money(res.total_cents) : ''}</div>
       <div class="bubble">${esc(t.customer_note || '')}</div></div></div>
-    <div class="ask"><div class="lbl">The AI agent wants to</div>
-      <div class="big">Refund <b>${money(amount)}</b>${dest && dest !== 'original' ? ` to <b>${esc(dest)}</b> <span class="muted">not the card that was charged</span>` : ''}</div>
-      ${c.d?.reason ? `<div class="why">Its stated reason: “${esc(c.d.reason)}”</div>` : ''}</div>`;
+    <div class="ask"><div class="lbl">The agent wants to</div>
+      <div class="big">Refund <b>${money(amount)}</b>${dest && dest !== 'original' ? ` to <b>${esc(dest)}</b> <span class="muted">not the card that was charged</span>` : ''}</div></div>`;
   if (!c.d) return h + `<div class="cp"><div class="cp-head"><span class="mark sm">W</span>Warrant checkpoint</div>
-      <div class="shimmer">Checking the written rules and Sam's past decisions in MongoDB Atlas…</div></div>`;
+      <div class="shimmer" style="padding-bottom:8px">Checking the rules and Sam's past decisions in MongoDB Atlas…</div></div>`;
   const [rk, rt] = rulesRow(c.d), past = pastRow(c.d, c.approval);
-  const v = {allow: ['ok', 'Allowed', 'A single-use warrant was issued for exactly this call.'],
-             step_up: ['warn', 'Held for Sam', 'Nothing is paid until a human decides.'],
-             deny: ['bad', 'Refused', 'Nothing is paid.']}[c.d.decision];
-  h += `<div class="cp"><div class="cp-head"><span class="mark sm">W</span>Warrant checkpoint <span class="muted">one transaction in MongoDB Atlas</span>
-        <span class="sp"></span><span class="pill ${v[0]}${fresh('v' + c.run._id)}" title="${esc(v[2])}">${v[1]}</span></div>
+  const v = {allow: ['ok', 'Allowed'], step_up: c.s.label === 'again' ? ['ok', 'Stopped'] : ['warn', 'Held for Sam'], deny: ['bad', 'Refused']}[c.d.decision];
+  h += `<div class="cp"><div class="cp-head"><span class="mark sm">W</span>Warrant checkpoint
+        <span class="sp"></span><span class="pill ${v[0]}${fresh('v' + c.run._id)}">${v[1]}</span></div>
       <div class="row ${rk}"><i></i><div><b>Written rules</b><p>${rt}</p></div></div>
       ${past ? `<div class="row ${past[0]}"><i></i><div><b>Sam's past decisions</b><p>${past[1]}</p></div></div>` : ''}</div>`;
   return h + outcomeHtml(c, amount, dest);
@@ -448,51 +506,95 @@ function convoHtml(c) {
 const idle = (title, text) => `<div class="idle"><b>${title}</b>${text}</div>`;
 function reviewHtml(a) {
   const q = a.request, dest = q.args.destination, byPrecedent = policies.get(q.rule)?.uses_precedents;
-  const close = (a.precedents || []).filter(p => p.rerank_score == null || p.rerank_score >= 0.6);
-  const precs = close.length ? close.map(p => `<div class="prec ${p.decision}">
+  const close = (a.precedents || []).filter(p => p.rerank_score == null || p.rerank_score >= 0.6).slice(0, 2);
+  const precs = !close.length ? '' : `<div class="rsec"><b>Found in MongoDB Atlas</b> <span class="muted mono">$rankFusion → $rerank${a.precedent_ms != null ? ' · ' + a.precedent_ms + ' ms' : ''}</span>
+    ${close.map(p => `<div class="prec ${p.decision}">
       <div class="ph"><span class="pill ${p.decision === 'approved' ? 'ok' : 'bad'}">${esc(p.decision)}</span>
         ${p.seeded === false ? '<span class="learned">Your ruling, a moment ago</span>' : ''}
         <span class="muted mono">${p.rerank_score != null ? 'match ' + Number(p.rerank_score).toFixed(2) : ''}</span></div>
-      <div class="pq">“${esc(p.outcome_note || '')}”</div>
-      <div class="muted small">${p.amount_cents ? money(p.amount_cents) + ' · ' : ''}${esc(p.summary)}</div></div>`).join('')
-    : `<p>Nothing closely similar has been ruled on before.</p>`;
+      <div class="pq">“${esc(p.outcome_note || '')}”</div></div>`).join('')}</div>`;
   return `<div class="review" data-id="${esc(a._id)}">
-    <div class="rtop"><span class="pill warn">Needs your decision</span><span class="muted">held by the checkpoint, nothing is paid yet</span></div>
+    <div class="rtop"><span class="pill warn">Needs your decision</span>
+      <span class="muted">${byPrecedent ? 'It resembles a request you refused' : esc(q.explanation)} <span class="tag">${esc(q.rule)}</span></span></div>
     <div class="ramt">${money(q.args.amount_cents)} <span>refund${dest && dest !== 'original' ? ' to ' + esc(dest) : ''}</span></div>
-    <div class="rsec"><b>Why you are being asked</b>
-      <p>${byPrecedent ? 'It passes the written rules, and it resembles a request that was refused before.' : esc(q.explanation) + '.'} <span class="tag">${esc(q.rule)}</span></p></div>
-    <div class="rsec"><b>Closest past decisions</b> <span class="muted small">$vectorSearch + $search → $rankFusion → $rerank${a.precedent_ms != null ? ' · ' + a.precedent_ms + ' ms' : ''}</span>${precs}</div>
+    ${precs}
     <div class="voice" id="voice" hidden><div class="orb" id="orb"></div><div>
-      <div class="vstat" id="vstat">Connecting…</div><div class="vtalk" id="vtalk"></div>
+      <div class="vstat" id="vstat">Calling Sam…</div><div class="vtalk" id="vtalk"></div>
       <input type="text" id="vsay" placeholder="Type your reply and press Enter" hidden></div></div>
-    <input type="text" id="reason" placeholder="Your reason. It becomes the ruling the next request is checked against.">
-    <div class="ract"><button class="btn dark" data-d="denied">Deny</button><button class="btn" data-d="approved">Approve</button><span class="sp"></span>
-      ${cfg.elevenlabs_agent_id ? `<button class="btn blue" id="vbtn" data-v="voice"><span class="dot"></span>Decide by voice</button><button class="btn ghost" data-v="text" title="The same desk agent, typed">Type instead</button>` : ''}</div>
-    ${cfg.elevenlabs_agent_id ? `<div class="codebox">When you decide by voice, say this code <b>${esc(a.challenge)}</b></div>` : ''}
+    ${cfg.elevenlabs_agent_id ? `<div class="ract"><button class="btn blue" id="vbtn" data-v="voice"><span class="dot"></span>Decide by voice</button>
+      <span class="codebox">then say the code <b>${esc(a.challenge)}</b></span><span class="sp"></span>
+      <button class="btn ghost sm" data-v="text" title="The same desk agent, typed">Type to the desk</button></div>` : ''}
+    <div class="typed"><input type="text" id="reason" placeholder="Or type a reason"><button class="btn dark" data-d="denied">Deny</button><button class="btn" data-d="approved">Approve</button></div>
   </div>`;
 }
+// The document a ruling became, shown as the change it made to the collection.
+function docHtml(l, index) {
+  const n = baseCount == null ? null : baseCount + index;
+  const lines = ['_id', 'decision', 'decided_by', 'channel', 'outcome_note', 'summary'].filter(k => l[k] != null).map(k =>
+    `<div class="dl"><i>+</i><span class="dk">${k}</span>: <span class="dv">${esc(JSON.stringify(l[k]))}</span>${k === 'summary' ? '<em>Atlas embeds this field itself</em>' : ''}</div>`).join('');
+  return `<div class="doc${fresh('doc' + l._id)}">
+    <div class="dh"><span class="live"></span>MongoDB Atlas <span class="mono">${esc(atlas?.database || 'warrant')}.precedents</span><span class="sp"></span>${n != null ? `<b class="mono">${n} → ${n + 1} documents</b>` : ''}</div>
+    <div class="dbody">${lines}</div>
+    <div class="df">✓ Embedded by Atlas (voyage-4)${l.seconds != null ? ` and searchable in ${l.seconds} s` : ''}. No embedding code in this app.</div></div>`;
+}
 function rulingHtml(a) {
-  const id = 'PR-' + a._id.split('_').slice(-2).join('-'), l = learned.find(x => x._id === id);
+  const id = 'PR-' + a._id.split('_').slice(-2).join('-'), i = learned.findIndex(x => x._id === id), l = learned[i];
+  const said = (transcripts.get(a._id) || String(a.evidence?.transcript || '').split(' | ').map(t => {
+    const k = t.indexOf(': '); return k > 0 ? {who: t.slice(0, k), text: t.slice(k + 2)} : null; }).filter(Boolean)).filter(x => x.who !== 'Error').slice(-3);
   return `<div class="ruling">
     <div class="rtop"><span class="pill ${a.status === 'denied' ? 'bad' : 'ok'}">You ${a.status === 'denied' ? 'said no' : 'approved it'}</span>
-      <span class="muted">${a.channel === 'voice' ? 'by voice, with the challenge code' : 'in the console'}</span></div>
+      <span class="muted">${a.channel === 'voice' ? 'by voice, code verified' : 'in the console'}</span></div>
     <div class="quote">“${esc(a.note || 'No reason given')}”</div>
-    <div class="saved ${l ? 'done' : ''}"><b>${l ? 'Saved as a ruling in MongoDB Atlas.' : '<span class="shimmer">Saving your ruling in MongoDB Atlas…</span>'}</b>
-      <p>${l ? `Atlas embedded and indexed it${l.seconds != null ? ' in about ' + l.seconds + ' s' : ''}. There is no embedding code in this app. Every refund is now checked against it.`
-             : 'Automated Embedding is indexing it.'}</p></div>
+    ${said.length ? `<div class="said">${said.map(x => `<div class="vb ${x.who === 'You' ? 'you' : ''}">${esc(x.text)}</div>`).join('')}</div>` : ''}
+    ${l ? docHtml(l, i) : `<div class="saved"><b><span class="shimmer">Saving your ruling in MongoDB Atlas…</span></b></div>`}
     ${l && !runFor('again') ? `<button class="btn blue wide" data-run="3">Send the first request again <kbd>3</kbd></button>` : ''}
   </div>`;
 }
 function inboxHtml(c) {
-  if (!c || c.status === 'none') return idle('Sam is not needed yet.', 'When the checkpoint is unsure, the request lands here.');
+  if (!c || c.status === 'none') return idle('Sam is not needed yet.', '');
   const a = c.approval;
   if (a && a.status === 'pending') return reviewHtml(a);
   if (c.s.label === 'ruling' && a && (a.status === 'denied' || a.status === 'approved')) return rulingHtml(a);
-  if (c.s.label === 'first' && (c.status === 'paid' || c.status === 'reversed'))
-    return idle('Nothing reached Sam.', 'The request passed every written rule, so nobody asked him. That is the gap.');
-  if (c.status === 'denied') return idle('You said no.', a?.note ? `“${esc(a.note)}”` : 'Nothing was paid.');
-  if (c.status === 'working' || c.status === 'paying') return idle('Sam is not needed yet.', 'The checkpoint is deciding.');
+  if (c.s.label === 'first' && (c.status === 'paid' || c.status === 'reversed')) return idle('Nothing reached Sam.', 'No rule was broken, so nobody asked him.');
+  if (c.status === 'denied') return idle('You said no.', a?.note ? `“${esc(a.note)}”` : '');
+  if (c.status === 'working' || c.status === 'paying') return idle('Sam is not needed yet.', '');
   return idle('Nothing needs Sam right now.', '');
+}
+// In step 2 the checkpoint calls Sam itself: the desk agent asks the question out loud. ?autovoice=0 turns this off.
+function maybeAsk(c) {
+  const a = c?.approval;
+  if (!a || a.status !== 'pending' || c.s.label !== 'ruling' || !playedHere.has('ruling')) return;
+  if (!cfg.elevenlabs_agent_id || params.get('autovoice') === '0' || voice.id || autoAsked.has(a._id)) return;
+  autoAsked.add(a._id);
+  setTimeout(() => brief(a._id, false), 500);
+}
+
+/* ---------- the picture: customer, agent, checkpoint, payment ---------- */
+const ICON = {
+  person: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  bot: '<svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01"/></svg>',
+  shield: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+  card: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M3 10h18"/></svg>',
+};
+function buildFlow() {
+  const node = (id, icon, name) => `<div class="fnode" id="fn-${id}"><span class="ic">${ICON[icon]}</span><div><b>${name}</b><span id="fs-${id}"></span></div></div>`;
+  $('flow').innerHTML = node('cust', 'person', 'Customer') + '<div class="wire" id="fw-1"></div>' + node('agent', 'bot', 'AI agent')
+    + '<div class="wire" id="fw-2"></div>' + node('gate', 'shield', 'Warrant checkpoint') + '<div class="wire" id="fw-3"></div>' + node('money', 'card', 'Payment');
+}
+function renderFlow(c) {
+  const st = c?.status || 'none', first = c?.s.label === 'first', again = c?.s.label === 'again';
+  const amount = c ? money(c.d?.payload?.args?.amount_cents ?? c.ticket.requested_refund_cents) : '';
+  const f = {cust: ['', 'asks for a refund'], agent: ['', 'acts for Sam'], gate: ['', 'checks every action'], money: ['', 'nothing paid'], w: ['', '', '']};
+  if (st !== 'none') { f.cust = ['on', `asks for ${amount}`]; f.agent = ['on', 'wants to refund']; f.gate = ['on pulse', 'checking in Atlas…']; f.w = ['on', 'run', '']; }
+  if (st === 'paying') { f.gate = ['ok', 'allowed']; f.w = ['on', 'on', 'run']; }
+  if (st === 'paid') { f.gate = ['ok', 'allowed, no rule broken']; f.w = ['on', 'on', first ? 'on bad' : 'on ok']; f.money = [first ? 'bad' : 'ok', `${amount} paid`]; }
+  if (st === 'reversed') { f.gate = ['ok', 'allowed']; f.w = ['on', 'on', 'on ok']; f.money = ['ok', 'paid, then reversed']; }
+  if (st === 'held') { f.gate = again ? ['ok', 'stopped by Sam\'s ruling'] : ['warn', 'asks Sam']; f.w = ['on', 'on', 'cut']; }
+  if (st === 'denied') { f.gate = ['ok', 'Sam said no']; f.w = ['on', 'on', 'cut']; }
+  if (st === 'approved') { f.gate = ['ok', 'Sam approved']; f.w = ['on', 'on', 'run']; }
+  if (st === 'refused' || st === 'cancelled') { f.gate = ['ok', st]; f.w = ['on', 'on', 'cut']; }
+  for (const id of ['cust', 'agent', 'gate', 'money']) { $('fn-' + id).className = 'fnode ' + f[id][0]; $('fs-' + id).textContent = f[id][1]; }
+  f.w.forEach((k, i) => { $('fw-' + (i + 1)).className = 'wire ' + k; });
 }
 function renderInbox(c) {
   // Never redraw the card under a live voice session: the orb, transcript and typed reason must stay put.
@@ -520,9 +622,10 @@ function stepsHtml() {
 async function play(n) {
   const s = DEMO[n - 1];
   if (!s) return;
+  if (document.body.dataset.tab !== 'demo') showTab('demo');
   if (caseOf(s).status !== 'none') { viewStep = n; return render(); }
   if (n === 3 && !learned.length) return toast('Step 3 waits until Sam has ruled in step 2 and Atlas has indexed it.');
-  viewStep = n; introOpen = null;
+  viewStep = n; introOpen = null; playedHere.add(s.label);
   try {
     const {run_id} = await api('/runs', {tickets: [s.ticket], label: s.label, pace: 0, lookup: false, mode: 'scripted'});
     if (!runs.has(run_id)) runs.set(run_id, {_id: run_id, label: s.label, status: 'running'});
@@ -545,11 +648,11 @@ async function undo() {
 
 /* ---------- what Atlas is doing ---------- */
 const TILES = [
-  ['tx', 'One transaction', 'The decision, the warrant and the ledger entry commit together or not at all.'],
-  ['search', 'Hybrid search, then rerank', '$rankFusion of $vectorSearch and $search, then $rerank, in one aggregation.'],
-  ['embed', 'Automated Embedding', 'Atlas embeds each ruling itself. There is no embedding code in this app.'],
-  ['cs', 'Change streams', 'This page, the kill switch and the waiting agent all update without polling.'],
-  ['ledger', 'Validated, chained ledger', 'The database rejects malformed entries. Each entry is hashed to the one before.'],
+  ['tx', 'One transaction', 'Decision, warrant and ledger entry commit together.'],
+  ['search', 'Hybrid search, then rerank', '$rankFusion of $vectorSearch and $search, then $rerank.'],
+  ['embed', 'Automated Embedding', 'Atlas embeds each ruling itself. No embedding code here.'],
+  ['cs', 'Change streams', 'This page, the kill switch and the waiting agent. No polling.'],
+  ['ledger', 'Validated, chained ledger', 'Schema-validated entries, each hashed to the one before.'],
 ];
 const tileState = {};
 function buildTiles() {
@@ -584,15 +687,51 @@ function renderTiles() {
   }
 }
 function renderScore() {
-  if (!score?.arms) { $('redteam').hidden = true; return; }
-  const [none, gate, after] = score.arms, b = score.model_baseline;
-  $('rt-sum').textContent = `${none.attacks_executed} of ${score.attacks} attacks get through with no checkpoint, ${gate.attacks_executed} with Warrant, ${after.attacks_executed} after one human ruling`;
-  $('rt').innerHTML = `<div class="arm bad"><b>${none.attacks_executed}</b><span>no checkpoint</span></div><span class="to">→</span>
-    <div class="arm mid"><b>${gate.attacks_executed}</b><span>Warrant</span></div><span class="to">→</span>
-    <div class="arm good"><b>${after.attacks_executed}</b><span>after one human ruling</span></div>
-    <p>Attacks that got through, out of ${score.attacks}, scored by checks the agent never sees. Legitimate work completed: ${after.legit_completed} of ${score.legit} every time. No rule was edited between the last two.</p>
-    ${b ? `<p><b>${esc(b.model)} on its own</b>, with the rules written in its prompt and no checkpoint: it broke a written rule in ${b.written_rule_runs_violated} of ${b.written_rule_runs} runs, and still paid out in ${b.unwritten_runs_violated} of ${b.unwritten_runs} runs where no rule was written.</p>` : ''}`;
-  if (score.server_version) $('envtxt').textContent = `MongoDB Atlas · ${score.server_version}`;
+  if (score?.server_version) $('envtxt').textContent = `MongoDB Atlas · ${score.server_version}`;
+  if (!score?.arms) $('rt').innerHTML = '<div class="empty">Run ./warrant scoreboard to produce the red-team receipt.</div>';
+  else {
+    const [none, gate, after] = score.arms, b = score.model_baseline;
+    $('rt').innerHTML = `<div class="h3" style="flex-basis:100%;margin-top:0">Red team: ${score.attacks} attacks, scored by checks the agent never sees</div>
+      <div class="arm bad"><b>${none.attacks_executed}</b><span>get through with no checkpoint</span></div><span class="to">→</span>
+      <div class="arm mid"><b>${gate.attacks_executed}</b><span>with Warrant</span></div><span class="to">→</span>
+      <div class="arm good"><b>${after.attacks_executed}</b><span>after one human ruling</span></div>
+      <p>Legitimate work completed: ${after.legit_completed} of ${score.legit} in every arm. No rule was edited between the last two.</p>
+      ${b ? `<p><b>${esc(b.model)} alone</b>, rules in its prompt, no checkpoint: it broke a written rule in ${b.written_rule_runs_violated} of ${b.written_rule_runs} runs, and still paid out in ${b.unwritten_runs_violated} of ${b.unwritten_runs} runs where no rule was written.</p>` : ''}`;
+  }
+  const t = score?.tests;
+  $('tests').hidden = !t;
+  if (t) $('tests').innerHTML = `<div class="h3" style="margin-top:0">${t.passed} of ${t.passed + t.failed} acceptance tests pass against the Atlas cluster
+      <span class="muted" style="font-weight:400">· ${t.seconds} s · ${esc(String(t.at).slice(0, 16).replace('T', ' '))} UTC · database ${esc(t.database)}</span></div>
+    <div class="tgrid">${t.cases.map(x => `<span class="tcase ${x.outcome === 'passed' ? 'ok' : 'no'}">${x.outcome === 'passed' ? '✓' : '✕'} ${esc(x.id.split('::').pop().replace(/^test_/, '').replace(/_/g, ' '))}</span>`).join('')}</div>`;
+}
+
+/* ---------- tabs, and the live view of the database ---------- */
+function showTab(t) {
+  document.body.dataset.tab = t;
+  for (const b of $('tabs').children) b.classList.toggle('on', b.dataset.tab === t);
+  if (t === 'atlas') loadAtlas();
+  window.scrollTo(0, 0);
+}
+async function loadAtlas() {
+  try {
+    atlas = await api('/atlas');
+    const pc = atlas.collections.find(c => c.name === 'precedents');
+    if (pc && baseCount == null) baseCount = pc.count - learned.length;
+    renderAtlas(); render();
+  } catch (e) { $('insidebody').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+function renderAtlas() {
+  if (!atlas) return;
+  const a = atlas, last = learned[learned.length - 1];
+  $('atlas-where').textContent = `the hackathon sandbox cluster · database ${a.database}`;
+  $('insidebody').innerHTML = `${last ? '<div class="h3">The latest write: Sam\'s ruling</div>' + docHtml(last, learned.length - 1) : ''}
+    <section class="pcard"><table><tr><th>Collection</th><th>Documents</th><th>Enforced by the database</th><th>What it holds</th></tr>
+      ${a.collections.map(c => `<tr><td class="num">${esc(a.database)}.${esc(c.name)}</td><td class="num">${c.count}</td>
+        <td>${c.features.map(f => chip(f.kind, f.text)).join('') || '<span class="muted">none</span>'}</td><td>${esc(c.what)}</td></tr>`).join('')}</table></section>
+    <div class="two">
+      <div><div class="h3">The precedent search: one aggregation, on every refund</div><pre class="code">db.precedents.aggregate(${esc(JSON.stringify(a.pipeline, null, 2))})</pre></div>
+      <div><div class="h3">The ledger's validator: the database rejects anything else</div><pre class="code">${esc(JSON.stringify(a.ledger_validator, null, 2))}</pre></div>
+    </div>`;
 }
 
 /* ---------- audit trail ---------- */
@@ -673,9 +812,10 @@ function render() {
   document.body.classList.toggle('started', latestStep() > 0);
   $('intro').classList.toggle('compact', introOpen === null ? latestStep() > 0 : !introOpen);
   set('steps', stepsHtml());
-  set('caption', c ? `<b>${esc(c.s.title)}.</b> ${esc(c.s.caption)}` : 'Press <kbd>1</kbd> to begin.');
-  set('convo', c ? convoHtml(c) : '<div class="empty">A customer is about to ask the AI agent for a refund.</div>');
+  renderFlow(c);
+  set('convo', c ? convoHtml(c) : '<div class="empty">A customer is about to ask the agent for a refund.</div>');
   renderInbox(c);
+  maybeAsk(c);
   renderTiles();
   renderAudit();
 }
@@ -689,7 +829,7 @@ async function decide(id, decision) {
 const vui = {
   show(textOnly) {
     $('voice').hidden = false; $('vsay').hidden = !textOnly; $('vtalk').innerHTML = '';
-    $('vstat').textContent = 'Connecting…'; $('orb').className = 'orb';
+    $('vstat').textContent = 'Calling Sam…'; $('orb').className = 'orb';
     if ($('vbtn')) $('vbtn').innerHTML = '<span class="dot on"></span>End';
   },
   line(whoIs, text) {
@@ -716,6 +856,14 @@ async function endBrief() {
   try { await session?.endSession(); } catch (e) {}
   render();
 }
+// The decision is in. Mute the microphone so the desk can finish its last sentence, then hang up.
+function finishBrief() {
+  if (!voice.id || voice.ending) return;
+  const id = voice.id;
+  voice.ending = true;
+  try { voice.session?.setMicMuted(true); } catch (e) {}
+  setTimeout(() => { if (voice.id === id) endBrief(); }, 5000);
+}
 // Voice step-up. An ElevenLabs agent briefs Sam from the approval request and its closest past ruling,
 // then submits his decision through a client tool. Policy is the control. Voice is a channel: the code
 // on screen ties it to this approver, and the transcript is stored in the ledger as evidence.
@@ -725,10 +873,18 @@ async function brief(approvalId, textOnly) {
   if (!a || a.status !== 'pending') return;
   const q = a.request, dest = q.args.destination, top = (a.precedents || [])[0];
   const close = top && (top.rerank_score == null || top.rerank_score >= 0.6);
-  const amount = money(q.args.amount_cents);
-  voice = {id: approvalId, session: null, textOnly, lines: []};
+  const amount = money(q.args.amount_cents), res = q.resource || {};
+  const t = [...tickets.values()].find(x => x.order_id === (res.id || q.args.order_id)) || {};
+  const firstPaid = caseOf(DEMO[0]).status === 'paid';
+  const lines = [];
+  voice = {id: approvalId, session: null, textOnly, lines};
+  transcripts.set(approvalId, lines);                     // kept, and shown on the ruling afterwards
   vui.show(textOnly);
-  const line = (whoIs, text) => { if (text) { voice.lines.push({who: whoIs, text}); vui.line(whoIs, text); } };
+  const line = (whoIs, text) => {
+    if (!text) return;
+    lines.push({who: whoIs, text}); vui.line(whoIs, text);
+    if (approvals.get(approvalId)?.status !== 'pending') render();
+  };
   try {
     const {Conversation} = await import('https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.36.1/+esm');
     let conversationId = null;
@@ -745,8 +901,9 @@ async function brief(approvalId, textOnly) {
         rule: policies.get(q.rule)?.uses_precedents ? 'It resembles a request you refused before' : q.explanation,
         precedent: close ? (top.seeded === false ? `Your earlier ruling was: ${top.outcome_note || ''}` : `A similar request was ${top.decision} before: ${top.outcome_note || ''}`)
                          : 'No similar ruling is on file',
-        agent_reason: q.reason,
-        customer_note: q.note || 'none',
+        // context the desk can use if Sam asks what is going on. It is not read out unless he asks.
+        agent_reason: q.reason + (firstPaid ? '. Background: earlier today the agent paid a 300 dollar refund of the same kind to a different card, because no written rule covers where a refund is sent' : ''),
+        customer_note: (t.customer ? `${t.customer}, order ${res.id || t.order_id}${res.total_cents ? ' for ' + money(res.total_cents) : ''}, wrote: ` : '') + (q.note || 'none'),
       },
       clientTools: {
         submit_decision: async ({decision, reason, challenge_code}) => {
@@ -755,9 +912,9 @@ async function brief(approvalId, textOnly) {
               approver: 'human:sam', decision, channel: 'voice', note: reason,
               evidence: {provider: 'elevenlabs', conversation_id: conversationId, challenge_code: String(challenge_code),
                          mode: textOnly ? 'text' : 'voice',
-                         transcript: voice.lines.map(l => `${l.who}: ${l.text}`).join(' | ').slice(-900)}});
-            setTimeout(endBrief, 2200);
-            return 'success: the decision is recorded';
+                         transcript: lines.map(l => `${l.who}: ${l.text}`).join(' | ').slice(-900)}});
+            finishBrief();
+            return 'success: the decision is recorded and saved as a ruling. Similar requests will now be held.';
           } catch (e) { return `error: ${e.message}`; }
         },
       },
@@ -772,7 +929,11 @@ async function brief(approvalId, textOnly) {
     });
     if (voice.id !== approvalId) { try { await session.endSession(); } catch (e) {} return; }
     voice.session = session;
-  } catch (e) { line('Error', e.message || String(e)); }
+  } catch (e) {
+    line('Error', `${e.message || e}. You can still type a reason and press Deny.`);
+    voice = {id: null, session: null, textOnly: false, lines: []};
+    if ($('vbtn')) $('vbtn').innerHTML = '<span class="dot"></span>Decide by voice';
+  }
 }
 
 /* ---------- events ---------- */
@@ -803,19 +964,8 @@ $('inbox').onkeydown = ev => {
   ev.target.value = '';
 };
 $('start').onclick = () => play(1);
-$('inside').ontoggle = async () => {
-  if (!$('inside').open) return;
-  try {
-    const a = await api('/atlas');
-    $('insidebody').innerHTML = `<table><tr><th>Collection</th><th>Documents</th><th>Enforced by the database</th><th>What it holds</th></tr>
-      ${a.collections.map(c => `<tr><td class="num">${esc(a.database)}.${esc(c.name)}</td><td class="num">${c.count}</td>
-        <td>${c.features.map(f => chip(f.kind, f.text)).join('') || '<span class="muted">none</span>'}</td><td>${esc(c.what)}</td></tr>`).join('')}</table>
-      <div class="h3">The precedent search: one aggregation, run on every refund</div>
-      <pre class="code">db.precedents.aggregate(${esc(JSON.stringify(a.pipeline, null, 2))})</pre>
-      <div class="h3">The ledger's schema validator (the database rejects anything else)</div>
-      <pre class="code">${esc(JSON.stringify(a.ledger_validator, null, 2))}</pre>`;
-  } catch (e) { $('insidebody').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
-};
+$('tabs').onclick = ev => { const b = ev.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab); };
+$('atlas-refresh').onclick = loadAtlas;
 $('intro-toggle').onclick = () => { introOpen = $('intro').classList.contains('compact'); render(); };
 $('reset').onclick = async () => {
   toast('Resetting. Waiting for Atlas to drop this session\'s rulings from the search index…');
@@ -835,7 +985,7 @@ $('full').onclick = async () => {
   if (params.get('mode')) body.mode = params.get('mode');
   const {run_id} = await api('/runs', body);
   runs.set(run_id, {_id: run_id, label: 'full queue', status: 'running'});
-  ledgers.set(run_id, new Map()); auditRunId = run_id; $('audit').open = true; render();
+  ledgers.set(run_id, new Map()); auditRunId = run_id; showTab('audit'); render();
 };
 $('kill').onclick = async () => {
   const r = await api(`/runs/${auditRunId}/kill`, {by: 'human:dana', reason: 'Stopped by the reviewer'});
@@ -859,14 +1009,14 @@ function connectFeed() {
     feedEvents++;
     if (coll === 'ledger') { if (!ledgers.has(doc.run_id)) ledgers.set(doc.run_id, new Map()); ledgers.get(doc.run_id).set(doc._id, doc); }
     if (coll === 'runs') runs.set(doc._id, {...(runs.get(doc._id) || {}), ...doc});
-    if (coll === 'approvals') { approvals.set(doc._id, doc); if (voice.id === doc._id && doc.status !== 'pending') setTimeout(endBrief, 2200); }
-    if (coll === 'precedents' && op === 'indexed') learned = learned.filter(l => l._id !== doc._id).concat(doc);
+    if (coll === 'approvals') { approvals.set(doc._id, doc); if (voice.id === doc._id && doc.status !== 'pending') finishBrief(); }
+    if (coll === 'precedents' && op === 'indexed') { learned = learned.filter(l => l._id !== doc._id).concat(doc); renderAtlas(); }
     render();
   };
 }
 
 (async () => {
-  buildTiles();
+  buildTiles(); buildFlow();
   [cfg, score] = await Promise.all([api('/config'), api('/scoreboard')]);
   const [ts, ps, ls, rs, as] = await Promise.all([api('/tickets'), api('/policies'), api('/precedents/learned'), api('/runs'), api('/approvals?status=all')]);
   ts.forEach(t => tickets.set(t._id, t)); ps.forEach(p => policies.set(p._id, p)); learned = ls;
@@ -876,7 +1026,7 @@ function connectFeed() {
   if (auditRunId) need.add(auditRunId);
   await Promise.all([...need].map(loadLedger));
   viewStep = latestStep();
-  renderScore(); render(); connectFeed();
+  renderScore(); render(); connectFeed(); loadAtlas();
 })();
 </script>
 </body>

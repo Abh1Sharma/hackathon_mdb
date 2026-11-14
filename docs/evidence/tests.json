@@ -1,0 +1,229 @@
+{
+ "at": "2026-11-14T20:37:31+00:00",
+ "database": "warrant_test",
+ "passed": 44,
+ "failed": 0,
+ "seconds": 152,
+ "cases": [
+  {
+   "id": "tests/test_control.py::test_at06_kill_refuses_the_next_call_and_revokes_unused_warrants",
+   "outcome": "passed",
+   "seconds": 7.57
+  },
+  {
+   "id": "tests/test_control.py::test_at07_rollback_compensates_reversible_steps_and_reports_the_rest",
+   "outcome": "passed",
+   "seconds": 16.76
+  },
+  {
+   "id": "tests/test_control.py::test_at08_step_up_pauses_until_a_human_approves",
+   "outcome": "passed",
+   "seconds": 9.75
+  },
+  {
+   "id": "tests/test_control.py::test_step_up_denied_by_a_human_stays_denied",
+   "outcome": "passed",
+   "seconds": 6.2
+  },
+  {
+   "id": "tests/test_control.py::test_at11_reconstruction_lists_every_step",
+   "outcome": "passed",
+   "seconds": 12.08
+  },
+  {
+   "id": "tests/test_control.py::test_voice_decision_needs_the_challenge_code",
+   "outcome": "passed",
+   "seconds": 6.2
+  },
+  {
+   "id": "tests/test_gateway.py::test_at01_allowed_refund_is_executed_verified_and_recorded",
+   "outcome": "passed",
+   "seconds": 8.96
+  },
+  {
+   "id": "tests/test_gateway.py::test_at02_out_of_region_is_denied_before_it_runs",
+   "outcome": "passed",
+   "seconds": 1.88
+  },
+  {
+   "id": "tests/test_gateway.py::test_at03_injected_transfer_is_attempted_and_denied",
+   "outcome": "passed",
+   "seconds": 3.85
+  },
+  {
+   "id": "tests/test_gateway.py::test_at04_a_used_warrant_cannot_be_replayed",
+   "outcome": "passed",
+   "seconds": 4.81
+  },
+  {
+   "id": "tests/test_gateway.py::test_at05_a_warrant_is_bound_to_its_arguments",
+   "outcome": "passed",
+   "seconds": 2.64
+  },
+  {
+   "id": "tests/test_gateway.py::test_fr01_fr02_identity_and_reason_are_required",
+   "outcome": "passed",
+   "seconds": 0.92
+  },
+  {
+   "id": "tests/test_gateway.py::test_at12_run_cap_is_computed_from_the_ledger",
+   "outcome": "passed",
+   "seconds": 18.58
+  },
+  {
+   "id": "tests/test_gateway.py::test_tampering_with_the_ledger_is_detected",
+   "outcome": "passed",
+   "seconds": 8.65
+  },
+  {
+   "id": "tests/test_m0.py::test_at10_ledger_rejects_missing_required_field",
+   "outcome": "passed",
+   "seconds": 0.1
+  },
+  {
+   "id": "tests/test_m0.py::test_at10_ledger_rejects_unknown_field_and_bad_enum",
+   "outcome": "passed",
+   "seconds": 0.19
+  },
+  {
+   "id": "tests/test_m0.py::test_ledger_accepts_a_valid_entry",
+   "outcome": "passed",
+   "seconds": 0.18
+  },
+  {
+   "id": "tests/test_m0.py::test_warrant_is_one_per_step",
+   "outcome": "passed",
+   "seconds": 0.19
+  },
+  {
+   "id": "tests/test_m0.py::test_seed_is_complete_and_reset_is_fast",
+   "outcome": "passed",
+   "seconds": 2.29
+  },
+  {
+   "id": "tests/test_m0.py::test_canonical_is_stable_and_survives_a_database_round_trip",
+   "outcome": "passed",
+   "seconds": 0.18
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[small refund-context0-allow-P-002]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[exactly $500-context1-allow-P-002]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[over $500 needs a human-context2-step_up-P-003]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[over $2,000-context3-deny-P-004]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[more than the order total-context4-deny-DEFAULT-DENY]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[out of region refund-context5-deny-P-005]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[out of region read-context6-deny-P-005]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[in region read-context7-allow-P-001]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[transfer is never allowed-context8-deny-P-006]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[unknown tool-context9-deny-DEFAULT-DENY]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[order not found-context10-deny-DEFAULT-DENY]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[run cap-context11-deny-P-007]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[resembles a denied precedent-context12-step_up-P-009]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_seed_policies[email in region-context13-allow-P-011]",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_at15_precedents_can_never_loosen_a_decision",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_decision_records_policy_versions",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_policies.py::test_retired_policies_are_ignored",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_precedents.py::test_at16_pipeline_shape",
+   "outcome": "passed",
+   "seconds": 0.0
+  },
+  {
+   "id": "tests/test_precedents.py::test_at16_override_request_matches_a_denied_precedent",
+   "outcome": "passed",
+   "seconds": 0.31
+  },
+  {
+   "id": "tests/test_precedents.py::test_at16_ordinary_requests_match_approved_precedents",
+   "outcome": "passed",
+   "seconds": 0.98
+  },
+  {
+   "id": "tests/test_precedents.py::test_tool_filter_is_applied",
+   "outcome": "passed",
+   "seconds": 0.29
+  },
+  {
+   "id": "tests/test_precedents.py::test_at14_override_refund_is_raised_to_step_up_by_precedent",
+   "outcome": "passed",
+   "seconds": 13.05
+  },
+  {
+   "id": "tests/test_precedents.py::test_at13_step_up_request_carries_precedents",
+   "outcome": "passed",
+   "seconds": 4.63
+  },
+  {
+   "id": "tests/test_precedents.py::test_at17_a_human_ruling_tightens_the_next_similar_request",
+   "outcome": "passed",
+   "seconds": 20.31
+  }
+ ]
+}

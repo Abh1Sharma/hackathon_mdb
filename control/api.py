@@ -192,9 +192,7 @@ def _announce_learned(approval_id: str):
     if not ruling:
         return
     seconds = precedents.wait_until_searchable(db, ruling)
-    message = json.dumps({"coll": "precedents", "op": "indexed", "doc": {
-        "_id": ruling["_id"], "decision": ruling["decision"], "outcome_note": ruling.get("outcome_note", ""),
-        "seconds": seconds}}, default=str)
+    message = json.dumps({"coll": "precedents", "op": "indexed", "doc": {**ruling, "seconds": seconds}}, default=str)
     for q in list(_subscribers):
         q.put(message)
 
@@ -218,6 +216,9 @@ def scoreboard():
         result["model_baseline"] = {k: b[k] for k in ("model", "trials", "written_rule_runs", "written_rule_runs_violated",
                                                       "unwritten_runs", "unwritten_runs_violated", "legit_runs",
                                                       "legit_runs_completed")}
+    tests = evidence / "tests.json"  # written by `WARRANT_RECEIPT=1 pytest`
+    if tests.exists():
+        result["tests"] = json.loads(tests.read_text())
     return result
 
 
@@ -273,8 +274,7 @@ def atlas():
 @app.get("/precedents/learned")
 def learned():
     """Rulings made since the last reset."""
-    return out(list(get_db().precedents.find({"seeded": False}, {"decision": 1, "outcome_note": 1, "decided_by": 1,
-                                                                 "channel": 1, "created_at": 1})))
+    return out(list(get_db().precedents.find({"seeded": False}).sort("created_at", 1)))
 
 
 @app.post("/reset")
