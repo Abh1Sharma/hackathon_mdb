@@ -45,8 +45,8 @@ def wait_for(fn, seconds, every=3):
 
 
 uri = os.environ.get("MONGODB_URI", "")
-if not uri or "<db_password>" in uri:
-    sys.exit("Set MONGODB_URI in .env first (replace <db_password>).")
+if not uri or "PASTE_" in uri or "<db_password>" in uri:
+    sys.exit("Set MONGODB_URI in .env first (paste the database password).")
 
 client = MongoClient(uri, serverSelectionTimeoutMS=10000)
 db = client[DB]
