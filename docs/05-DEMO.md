@@ -41,6 +41,20 @@ Fallbacks for step 2: type the rule and press **Flag it**, or use **Type to Warr
 
 Do not say "no rule was edited" after changing the threshold. Say "nothing was retrained and no rule was rewritten".
 
+## The 3-minute live demo
+
+Use the **Pitch** tab for the story and the **Demo** tab for the proof. **P** opens Pitch, the arrow keys move between slides, **N** shows speaker notes, and **1**, **2**, **3** jump to the demo from anywhere.
+
+| Time | Screen | Say |
+|---|---|---|
+| 0:00 | Pitch 1, The problem | "AI agents follow the rules. The damage happens where no rule exists. We measured it: Claude, with the rules in its prompt, broke none of them and still paid out six times in nine where no rule was written." |
+| 0:25 | Pitch 3, Warrant | "Warrant is a checkpoint between the agent and the money. The written rules first, then every decision a human has already made." |
+| 0:40 | Demo, keys 1, 2, 3 | The 60-second script above |
+| 1:45 | Pitch 5, What MongoDB Atlas made possible | "One cluster. Atlas embedded Sam's ruling itself, one aggregation searched it, and one transaction recorded the decision." |
+| 2:10 | Pitch 6, Proof | "Twelve attacks: twelve, one, zero. Forty-six tests against the live cluster." |
+| 2:30 | Pitch 7, The bigger picture | "Anywhere an agent can do something you cannot easily undo." |
+| 2:45 | MongoDB live, if a judge asks | Show the real documents and the search pipeline |
+
 ## If you have 3 minutes
 
 Run the 60-second script first, then add these in order:

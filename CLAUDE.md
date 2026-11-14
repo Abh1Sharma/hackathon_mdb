@@ -106,7 +106,7 @@ The demo server is started with `./warrant demo --scripted --port 8000` (it rese
 
 The story has one human on screen: Sam, who runs payments at a freight company. An AI support agent handles refund requests for him. The problem in plain words: the agent obeys every written rule and still pays requests nobody wrote a rule for, and afterwards nobody can say who allowed it. Warrant is the checkpoint between the agent and the money.
 
-The console (`console/index.html`, one file, no build step) has four tabs: Demo, MongoDB live, Proof, Audit trail. Demo opens with "Meet Sam", a start button and three floating cards (The problem, The checkpoint, The payoff). Above the stage is a flow strip: Customer, AI agent, Warrant checkpoint, Payment.
+The console (`console/index.html`, one file, no build step) has five tabs: Demo, Pitch, MongoDB live, Proof, Audit trail. Pitch is seven slides for the 3-minute live demo (problem, why the usual fixes fail, Warrant, the demo, what Atlas made possible, proof, the bigger picture). Keys: P opens it, arrows move, N shows speaker notes. Demo opens with "Meet Sam", a start button and three floating cards (The problem, The checkpoint, The payoff). Above the stage is a flow strip: Customer, AI agent, Warrant checkpoint, Payment.
 
 | Key | Step | What happens |
 |---|---|---|
@@ -117,7 +117,7 @@ The console (`console/index.html`, one file, no build step) has four tabs: Demo,
 | 5 (optional) | Warrant asks Sam | The other direction: a $900 request (T7) is over the agent's limit, so the checkpoint asks Sam. Voice approval with the three-digit code, or type a reason and click Deny |
 
 - Abhi asked for this flow at about 3:45 PM: Sam interjects by voice while watching requests, Warrant confirms and asks about the threshold, and the Atlas changes show as they happen.
-- Step 2 uses the same ElevenLabs agent with a per-call prompt and first message passed from the page (`talkPrompt` in the console). Client overrides for prompt and first message are enabled on the agent. Verified in typed mode only, not yet with a microphone. `?autovoice=0` stops key 2 from starting the microphone.
+- Step 2 uses the same ElevenLabs agent with a per-call prompt and first message passed from the page (`talkPrompt` in the console). Client overrides for prompt and first message are enabled on the agent. Abhi ran it with a microphone at about 4:05 PM and both tools fired (47 seconds). The agent answered a bare "Uh..." with "Take your time", so the built-in `skip_turn` tool is now enabled, both prompts tell it to stay silent on a filler, and the turn timeout is 30 seconds. That fix is verified in typed mode only. `?autovoice=0` stops key 2 from starting the microphone.
 - "No rule was edited" is only true when the threshold was not changed, and the page words it accordingly. If Sam changed the threshold, say "nothing was retrained and no rule was rewritten".
 - The threshold is on the `$rerank` score (0 to 1), default 0.70, with a 0.10 margin over the closest approved precedent. The repeat of the flagged request scores about 0.97. On the key 5 path the $300 request scores 0.76 against a ruling made on the $900 request, so a threshold above 75 would let it through there.
 - MongoDB live shows the tiles, the latest write, the P-009 diff, collection counts and what the database enforces, the search pipeline and the ledger validator. Proof shows the red-team numbers, the model-alone line and the test receipt (`WARRANT_RECEIPT=1 uv run --env-file .env pytest` writes `docs/evidence/tests.json`).
