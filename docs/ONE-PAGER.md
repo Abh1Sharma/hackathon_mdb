@@ -4,13 +4,17 @@
 
 ## What it is
 
-Warrant sits between an AI agent and its tools. No tool call runs without a warrant: a single-use authorization issued only after the gateway has identified the agent and the human it acts for, and checked the call against policy stored in MongoDB Atlas. Every decision is written to a ledger in the same transaction, so a reviewer can replay a run, stop it and undo it.
+An AI agent that can move money obeys every written rule and still pays requests nobody wrote a rule for, and afterwards nobody can say who allowed it. Warrant is a checkpoint between the agent and the money. Every action is checked in MongoDB Atlas, first against the written rules and then against every decision a human has made before, and the decision, the warrant and the ledger entry commit in one transaction.
 
 ## The moment
 
-A $300 refund to someone else's card is under every limit, so it goes through. A human then denies a similar $900 request and says why. The same $300 request, sent again, is stopped, citing that ruling and the human's words. **No rule was edited.**
+Sam runs payments at a freight company, and an AI agent handles refund requests for him.
 
-Rules are the statute. Human decisions are the case law. Both live in Atlas.
+1. A customer asks for $300 back, sent to someone else's card. It is under every limit, so the agent pays it.
+2. A $900 request of the same kind is over the agent's limit, so the checkpoint asks Sam. He says no, out loud, with a reason.
+3. The same $300 request returns and is held, citing his words. **No rule was edited and nothing was retrained.**
+
+Atlas stored the ruling, embedded it itself and had it searchable about a second later. Rules are the statute. Human decisions are the case law. Both live in Atlas.
 
 ## The numbers
 

@@ -1,51 +1,65 @@
 # 05 Demo
 
-Round 1: about 3 minutes live plus Q&A, to a few judges. Finals: 3 minutes on stage. The submission also needs a 1-minute video. This version replaces the script written the night before: it is built around the learning loop.
+The live slot may be as short as 1 minute (the earlier plan assumed about 3). The core script below fits 60 seconds and is also the 1-minute video. If the slot turns out to be 3 minutes, add the items under "If you have 3 minutes".
 
-Say once: "Everything you are about to see was built since 10:45 this morning."
+If there is room for one extra sentence, or a judge asks: "Everything you are about to see was built since 10:45 this morning."
+
+## The story in plain words
+
+An AI agent that can move money obeys every written rule and still pays requests nobody wrote a rule for, and afterwards nobody can say who allowed it. Warrant is a checkpoint between the agent and the money: every action is checked in MongoDB Atlas, first against the written rules and then against every decision a human has made before, and the decision is recorded in the same transaction. What is special is that Sam says no once, out loud, and about a second later Atlas has stored, embedded and indexed that ruling, so the next similar request is stopped, citing his words, with no retraining, no prompt edit and no new rule.
+
+Who is who: Sam runs payments at a freight company and is the only human in the story. An AI support agent handles refund requests for him. A customer asks for a refund.
 
 ## Setup
 
     ./warrant demo --scripted        # resets, then serves http://127.0.0.1:8000
 
-Console full screen. A terminal behind it with `./warrant replay` typed and not yet run. Headset on if using voice. The five demo steps are keys **1** to **5**. Click an empty area first so the keys are not typed into a text box.
+- Open http://127.0.0.1:8000 in Chrome, in a wide window. Voice needs the microphone, so allow it when Chrome asks.
+- Wear the headset for the voice step.
+- Click an empty area of the page before using the keys, so they are not typed into a text box.
+- Press **Reset** between runs. It waits until Atlas has dropped the last session's rulings from the search index, so step 1 is paid again.
 
-Between rehearsals press **Reset**. It waits until Atlas has dropped the last session's rulings from the search index, so step 1 goes through again.
+The page opens with a short preamble, "Meet Sam", and three cards: The problem, The checkpoint, The payoff. The demo is keys **1**, **2** and **3**. Key **4** is an optional undo.
 
-## Round 1 script (3:00)
+## The 60-second script
 
 | Time | Say | Do |
 |---|---|---|
-| 0:00 | "This morning an AI support agent refunded me in two minutes, with no human involved. Great for me. Now be that company. Here a customer asks for $300 back, sent to someone else's card. It is under every limit. Watch." | **1**. The customer's message appears, then: allowed, executed, verified |
-| 0:16 | "Nothing broke a rule. A person would have said no. Rules only catch what someone wrote down." | |
-| 0:24 | "Warrant sits between the agent and its tools. Every call: who is asking and for whom, policy stored in Atlas, a single-use warrant, all in one transaction." | **2**. Queue runs: allowed, refused by region, injected $5,000 transfer refused |
-| 0:50 | "This one is over the limit, so a human decides. These are the closest past decisions, from one Atlas pipeline: vector and text search fused, then reranked." | Point at the pipeline strip and the precedents |
-| 1:05 | Speak: "Deny. Refunds only go back to the original payment method." Then read the code | **3** (voice). Fallback: type the reason, press Deny |
-| 1:35 | "Atlas embedded that ruling itself. There is no embedding code in this app." | "Learned" notice |
-| 1:42 | "Same $300 request again." | **4**. Stopped: resembles the ruling, score about 0.82, my words on the card |
-| 1:58 | "No rule was edited. Search can tighten a decision automatically. Only a human can loosen one." | |
-| 2:08 | "And the one that got through at the start: undo it." | **5**. Refund reversed. Email marked "cannot undo" |
-| 2:22 | "We measured it. Twelve attacks, scored by checks the agent never sees. No gate: twelve get through. Warrant: one. After that single ruling: zero. And every legitimate task still completes." | Point at the Red team panel |
-| 2:36 | "What was hard: decision, warrant and ledger entry commit in one transaction, and a warrant is bound to the exact arguments, so a replayed or altered call is refused." | Terminal: `./warrant replay` |
-| 2:45 | "Warrant. Policy is the statute, precedents are the case law, and both live in Atlas." | |
+| 0:00 | "This is Sam. An AI agent handles refunds for him. Watch what it does with this one." | Press **1**. Step 1, "A request no rule covers" |
+| 0:06 | "Three hundred dollars, to someone else's card. It broke no rule, so it was paid. A person would have said no." | The customer's message appears, then the $300 refund is allowed and paid |
+| 0:15 | "A bigger one of the same kind is over the agent's limit, so the checkpoint asks Sam." | Press **2**. Step 2, "Sam is asked once". The $900 request appears in Sam's review inbox |
+| 0:22 | Listen to the one-sentence briefing. Then say: "Deny. Refunds only go back to the original payment method. The code is" and the three digits on screen | Start the voice briefing on the review card |
+| 0:38 | "That ruling is now in MongoDB Atlas. Atlas embedded it itself." | Wait until the page shows the ruling is saved and indexed |
+| 0:42 | "The same three hundred dollar request again." | Press **3**. Step 3, "It never happens again" |
+| 0:47 | "Stopped. It cites what I said twenty seconds ago. No rule edited, no retraining. One Atlas aggregation: vector and text search fused, then reranked." | The request is held, with Sam's ruling and his words on the card |
+| 0:56 | "Twelve attacks: twelve get through with no gate, one with Warrant, zero after that one ruling." | Open **Red team**: 12, 1, 0 |
 
-If something breaks: every step is also a button. If voice fails, type the reason. If the network dies, play the video and narrate.
+Fallback for the voice step: type the reason and click **Deny**. Every step is also a button. The voice step is the part most likely to run long, so if it does in rehearsal, use the typed reason. If the network dies, play the video and narrate.
 
-## Finals (3:00, four criteria weighted equally)
+## If you have 3 minutes
 
-Open with the buyer: "If your agents move money or touch customer records, this is the layer your risk team asks for." Keep steps 1, 3, 4 and 5. Cut the queue narration to one sentence. Close with the live Claude agent going through the same gate (`./warrant demo`, then **2**).
+Run the 60-second script first, then add these in order:
+
+- **Undo.** Press **4**, "Undo the first payment". The $300 refund from step 1 is reversed. The email is marked "cannot undo", because it was already sent.
+- **The full support queue.** Open **Audit trail** and run the full queue. It shows an allowed refund, a refusal because the order is outside the agent's region, and an injected $5,000 transfer that is refused.
+- **Kill.** In **Audit trail**, press **Kill** while a run is going. The agent's next call is refused and recorded.
+- **Replay.** In a terminal, run `./warrant replay`. It prints who acted, on whose behalf, what, why, which rule, and whether the effect was verified.
+- **The numbers.** Open **Red team** and give the model-alone result: Claude Opus 5.5, with the rules in its prompt and no gate, broke a written rule in 0 of 15 runs and still paid out in 6 of 9 runs where no rule was written.
+- **What was hard.** "The decision, the warrant and the ledger entry commit in one transaction, and a warrant is bound to the exact arguments, so a replayed or altered call is refused."
+
+For the finals, open with the buyer: "If your agents move money or touch customer records, this is the layer your risk team asks for." You can also open with your own story from this morning: an AI support agent refunded you in two minutes with no human involved.
 
 ## 1-minute video
 
-| Seconds | Shot |
-|---|---|
-| 0 to 5 | Console on screen. "A $300 refund that passes every rule. It shouldn't." |
-| 5 to 12 | Step 1: it is paid. Caption: "Rules only catch what someone wrote down" |
-| 12 to 40 | Uncut: deny the $900 request with a reason, the Learned notice, step 4 stopped with the citation |
-| 40 to 52 | Proof: the aggregation in `gateway/precedents.py`, `pytest` passing, `git log` showing today's commits |
-| 52 to 58 | "Warrant. Built today on MongoDB Atlas." |
+The video is the 60-second script above, recorded in one take.
 
-Record with Shift-Command-5 (Record Selected Portion, microphone on, Show Mouse Clicks). The recorder captures the microphone, not system audio, so narrate over the voice step or use the typed reason. Trim in QuickTime. Upload to YouTube as Unlisted and play the link in a private window with sound. Start recording by 3:45 PM.
+- Record with Shift-Command-5: Record Selected Portion, microphone on, Show Mouse Clicks.
+- The recorder captures the microphone and not system audio. So the agent's voice must come through the speakers, or use the typed reason for step 2.
+- Trim in QuickTime so it runs under 60 seconds.
+- Upload to YouTube as Unlisted, then play the link in a private window with sound.
+- Start recording by 3:45 PM.
+
+The submission asks for code as well as functionality. If the take runs short, end on two seconds of `gateway/precedents.py` showing the aggregation.
 
 ## One sentence for each judge
 

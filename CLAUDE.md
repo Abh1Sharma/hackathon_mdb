@@ -104,7 +104,25 @@ The demo server is started with `./warrant demo --scripted --port 8000` (it rese
 
 ### The demo (see `docs/05-DEMO.md`)
 
-Five keys: 1 send a $300 request (T8, allowed), 2 run the queue (T1, T4, T5, T7), 3 a human denies T7 with a reason, 4 send the $300 request again (stopped, citing the ruling), 5 roll back the first run. The learning loop is the moment to lead with. Per-call policy, chained logs and kill switches are table stakes (Microsoft's Agent Governance Toolkit has them): do not lead with those.
+The story has one human on screen: Sam, who runs payments at a freight company. An AI support agent handles refund requests for him, and a customer asks for a refund. The problem in plain words: the agent obeys every written rule and still pays requests nobody wrote a rule for, and afterwards nobody can say who allowed it. Warrant is the checkpoint between the agent and the money.
+
+The console is light-themed and story-first. It opens with a preamble, "Meet Sam", and three cards (The problem, The checkpoint, The payoff). Then three steps:
+
+| Key | Step | What happens |
+|---|---|---|
+| 1 | A request no rule covers | A customer asks for $300 back, sent to someone else's card (T8). It is under every limit, so the agent pays it |
+| 2 | Sam is asked once | A $900 request of the same kind (T7) is over the agent's $500 limit, so the checkpoint asks Sam. He denies it by voice with a reason and reads the three-digit code on screen. Fallback: type the reason and click Deny |
+| 3 | It never happens again | The same $300 request returns and is held, citing Sam's ruling and his words. No rule was edited |
+| 4 (optional) | Undo the first payment | Rollback of the first run. The refund is reversed and the email is marked cannot undo |
+
+Under the stage: a strip "What MongoDB Atlas did", and two collapsible sections, "Audit trail" (the ledger, kill, roll back, verify, the full support queue) and "Red team" (12, 1, 0 and the model-alone line).
+
+The 60-second script is also the 1-minute video. Abhi believes the live slot may be only 1 minute. In order: introduce Sam and press 1 ("It broke no rule, so it was paid. A person would have said no."). Press 2 and deny by voice ("Deny. Refunds only go back to the original payment method. The code is" and the three digits). Say the ruling is now in Atlas and that Atlas embedded it itself. Press 3 ("Stopped. It cites what I said twenty seconds ago. No rule edited, no retraining."). Close on the red-team numbers: 12, 1, 0. With 3 minutes, add the undo, the full queue from Audit trail, Kill, `./warrant replay` and the model-alone result.
+
+- Sam is the only human named on screen. The data still has `human:dana` as the person the agent acts for and as the reviewer for kill and rollback, and `human:sam` as the approver.
+- The scripted demo steps skip the order lookup to keep waits short.
+- Lead with the learning loop. Per-call policy, chained logs and kill switches are table stakes (Microsoft's Agent Governance Toolkit has them): do not lead with those.
+- Older notes in this file that mention keys 1 to 5, a five-step flow or a microphone button after key 2 describe the previous console.
 
 ### Rules learned today
 
@@ -135,6 +153,7 @@ Five keys: 1 send a $300 request (T8, allowed), 2 run the queue (T1, T4, T5, T7)
 - Audio is available on stage. A stored scoreboard result on stage is fine. Focus on getting through Round 1.
 - Opening line for the demo: his own story from today (an AI support agent refunded him for API credits he did not need, in two minutes, with no human).
 - Not decided: the project name (he worries "Warrant" and the styling may resemble other Claude-assisted entries), and whether to re-skin the scenario from logistics refunds to billing support. A real Stripe integration is out of scope for today.
+- About 2:45 PM, after his first voice trial: the agent heard him correctly, but the spoken briefing cut off and text on the page rendered badly. He wants a clean, light UI modelled on ElevenLabs and Retell, a preamble that says who Sam is, a flow that fits 60 seconds, and all effort on the demo story and the voice step.
 
 ### Open items
 

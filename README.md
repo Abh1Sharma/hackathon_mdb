@@ -1,13 +1,25 @@
 # Warrant
 
-**No agent action without a warrant.** A gateway between an AI agent and its tools that makes MongoDB Atlas the identity, policy and audit layer. Every tool call is tied to an identity, checked against policy stored in Atlas before it runs, and recorded in a tamper-evident ledger, so a reviewer can reconstruct a run, stop it mid-run and roll it back.
+**No agent action without a warrant.** A checkpoint between an AI agent and the money, with MongoDB Atlas as the identity, policy and audit layer.
 
 Built at **Agents in Context Toronto** (MongoDB x Cerebral Valley), Nov 14 2026.
 Problem statement 1: **Agents You Can Audit**. Everything in this repository was written on the day. The planning docs in `docs/` were committed first, then the code.
 
-![The console: a $300 request stopped because it resembles a ruling a human made seconds earlier](docs/img/console-learned.jpg)
+## The problem
 
-**The moment:** a $300 refund to someone else's card is under every limit, so it goes through. A human denies a similar $900 request and says why. The same $300 request, sent again, is stopped, citing that ruling and the human's words. No rule was edited. One page for judges: [docs/ONE-PAGER.md](docs/ONE-PAGER.md).
+An AI agent that can move money obeys every written rule and still pays requests nobody wrote a rule for. Afterwards, nobody can say who allowed it. We measured it: Claude Opus 5.5, with the rules in its prompt and no gate, broke a written rule in 0 of 15 runs and still paid out in 6 of 9 runs where no rule was written.
+
+## What Warrant does
+
+Warrant is a checkpoint between the agent and the money. Every action is checked in MongoDB Atlas: the written rules first, then every decision a human has made before, found with one aggregation (`$rankFusion` of `$vectorSearch` on an auto-embedding index and `$search`, then `$rerank`). The decision, the warrant and the ledger entry commit in one transaction, so each action is recorded with who allowed it.
+
+## What is special
+
+Sam, the person who approves refunds, says no once, out loud. Atlas stores that ruling, embeds it itself (Automated Embedding) and has it searchable about a second later, so the next similar request is stopped, citing his words, with no retraining, no prompt edit and no new rule.
+
+![Sam's ruling stops the same $300 request when it is sent again](docs/img/console-learned.jpg)
+
+**The moment:** three steps. First, a customer asks for $300 back, sent to someone else's card. It is under every limit, so the agent pays it. Second, a $900 request of the same kind is over the agent's $500 limit, so the checkpoint asks Sam, and he denies it by voice with a reason. Third, the same $300 request returns and is held, citing Sam's ruling and his words. No rule was edited. One page for judges: [docs/ONE-PAGER.md](docs/ONE-PAGER.md).
 
 ## The idea in three lines
 
@@ -144,7 +156,7 @@ Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), and an Atlas cluster on
     ./warrant setup                 # collections, validators, indexes, search indexes, seed
     ./warrant demo --scripted       # control API + console on http://127.0.0.1:8000
 
-In the console, keys 1 to 5 walk the demo: send a $300 request (allowed), run the queue, a human rules on the one that needs it (by voice or by button), send the $300 request again (stopped), undo the first one.
+In the console, keys 1 to 3 walk the demo: a customer's $300 request is paid, a $900 request of the same kind reaches Sam and he denies it (by voice or by button), and the same $300 request comes back and is held. Key 4 is an optional undo of the first payment.
 
 | Command | Does |
 |---|---|
@@ -162,7 +174,7 @@ In the console, keys 1 to 5 walk the demo: send a $300 request (allowed), run th
 
     gateway/    gateway.py (the gate), policies.py, ledger.py, precedents.py, control.py, killswitch.py, schema.py
     control/    FastAPI control API and the server-sent event feed
-    console/    one HTML page: run timeline, decision desk with precedents and voice, Kill, Roll back, Verify
+    console/    one HTML page: the story, three steps, Sam's review inbox with voice, audit trail
     agent/      scripted.py (no model) and live.py (Claude on LangGraph)
     systems/    mock orders, payments, CRM and email
     cli/        setup, reset, demo, replay, verify, precedents, scoreboard
