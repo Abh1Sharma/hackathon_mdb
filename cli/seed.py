@@ -52,7 +52,7 @@ POLICIES = [
     _p("P-007", "deny", "payments.refund", "At most $3,000 refunded per run (computed from the ledger)",
        [_c("history.run_refund_total_after_cents", "gt", 300000)]),
     _p("P-009", "step_up", "payments.refund", "Resembles a request a human refused before (precedent search)",
-       [_c("precedent.denied_match", "eq", True)], params={"min_score": 0.75, "min_margin": 0.1}),
+       [_c("precedent.denied_match", "eq", True)], params={"min_score": 0.7, "min_margin": 0.1}),
     _p("P-010", "allow", "crm.update_contact", "Update a customer record in the agent's regions",
        [_c("resource.region", "in", REF_REGIONS)]),
     _p("P-011", "allow", "email.send", "Email a customer in the agent's regions",

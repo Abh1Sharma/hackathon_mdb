@@ -125,6 +125,13 @@
   #notices > div:first-child { border-top:0; padding-top:0; }
   #notices b { color:var(--text); }
 
+  .rt { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+  .rt .arm b { display:block; font:600 34px/1 var(--serif); }
+  .rt .arm span { display:block; margin-top:5px; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .rt .arm.bad b { color:var(--no-tx); } .rt .arm.mid b { color:var(--hold-tx); } .rt .arm.good b { color:var(--ok-tx); }
+  .rt .to { color:var(--line2); font-size:22px; padding-bottom:16px; }
+  .rt p { flex-basis:100%; margin:6px 0 0; color:var(--text2); font-size:13px; }
+
   /* presenter stepper */
   footer { display:flex; gap:10px; padding:12px 22px; border-top:1px solid var(--line); background:rgba(17,39,51,.7); overflow-x:auto; }
   .stepbtn { flex:1; min-width:150px; display:flex; align-items:center; gap:10px; text-align:left; padding:10px 12px; border-radius:10px; }
@@ -161,6 +168,10 @@
     <section>
       <h2>Decision desk <span>requests that need a human</span></h2>
       <div id="approvals"><div class="empty">Nothing is waiting.</div></div>
+    </section>
+    <section id="redteam" hidden>
+      <h2>Red team <span id="rt-sub"></span></h2>
+      <div class="rt" id="rt"></div>
     </section>
     <section>
       <h2>Notices</h2>
@@ -492,7 +503,20 @@ feed.onmessage = m => {
   }
 };
 
+async function loadScoreboard() {
+  const r = await api('/scoreboard');
+  if (!r.arms) return;
+  const [none, gate, after] = r.arms, at = new Date(r.ran_at).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+  $('redteam').hidden = false;
+  $('rt-sub').textContent = `${r.attacks} attacks, scored by hidden checks`;
+  $('rt').innerHTML = `<div class="arm bad"><b>${none.attacks_executed}</b><span>no gate</span></div><span class="to">→</span>
+    <div class="arm mid"><b>${gate.attacks_executed}</b><span>Warrant</span></div><span class="to">→</span>
+    <div class="arm good"><b>${after.attacks_executed}</b><span>after one human ruling</span></div>
+    <p>Attacks that executed, out of ${r.attacks}. Legitimate work completed: ${after.legit_completed} of ${r.legit} in every arm. No policy was edited between the last two. <span class="muted">Run at ${esc(at)} on commit ${esc(r.commit)}.</span></p>`;
+}
+
 (async () => {
+  loadScoreboard();
   cfg = await api('/config');
   learned = await api('/precedents/learned');
   const list = await listRuns();

@@ -87,13 +87,14 @@ Paste this to start the session at 10:45:
 | Area | Where | Notes |
 |---|---|---|
 | Gate | `gateway/gateway.py` (`authorize`, `execute`, `call_tool`) | identify, resolve facts, precedent search, decision in one transaction, single-use warrant bound to an argument digest, execute, verify, record |
-| Policy | `gateway/policies.py`, seed policies in `cli/seed.py` | six operators, deny > step-up > allow, default deny. P-009 is the precedent rule, threshold 0.75 |
+| Policy | `gateway/policies.py`, seed policies in `cli/seed.py` | six operators, deny > step-up > allow, default deny. P-009 is the precedent rule: rerank score at least 0.70 and a 0.10 margin over the closest approved precedent |
 | Ledger | `gateway/ledger.py` | hash-chained per run, `verify` names the first broken entry |
 | Search | `gateway/precedents.py` | one aggregation: `$rankFusion` of `$vectorSearch` (autoEmbed, voyage-4) and `$search`, then `$rerank` (rerank-2.5). About 330 ms |
 | Control | `gateway/control.py`, `gateway/killswitch.py` | kill, approvals (web or voice with a challenge code), rollback, reconstruct. A human decision becomes a precedent |
 | API and console | `control/api.py`, `console/index.html` | FastAPI plus one HTML page. Change streams feed it over SSE. Keys 1 to 5 walk the demo |
 | Agents | `agent/scripted.py`, `agent/live.py` | scripted is the stage default. Live is Claude Opus 5.5 on LangGraph with the MongoDB checkpointer, verified |
 | Voice | `voice/agent.md` | ElevenLabs agent "Warrant Approvals Desk". Its id is in `.env` as `ELEVENLABS_AGENT_ID`, never in the repo. Verified in typed mode only |
+| Red team | `evals/`, `checks/hidden.py`, `./warrant scoreboard` | 12 attacks and 8 legitimate tasks, three arms: 12/12, 1/12, 0/12 executed. Receipt in `docs/evidence/scoreboard.json` |
 | Tests | `tests/` | 44 acceptance tests against the cluster, in database `warrant_test`. IDs match the spec (AT-01 to AT-17) |
 
 ### Commands

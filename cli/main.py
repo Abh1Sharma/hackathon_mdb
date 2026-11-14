@@ -124,6 +124,13 @@ def cmd_scoreboard(args):
     print(f"\none human ruling, searchable in Atlas after {result['ruling']['indexed_after_seconds']} s. "
           f"policy documents changed: {'yes' if result['policies_changed'] else 'no'}")
     print("receipt: docs/evidence/scoreboard.json")
+    readme = scoreboard.EVIDENCE.parent.parent.parent / "README.md"
+    text = readme.read_text()
+    start, end = "<!-- scoreboard:start -->", "<!-- scoreboard:end -->"
+    if start in text and end in text:
+        readme.write_text(text[:text.index(start) + len(start)] + "\n" + scoreboard.markdown(result) + "\n"
+                          + text[text.index(end):])
+        print("README scoreboard table refreshed")
 
 
 def main():

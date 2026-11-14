@@ -197,6 +197,13 @@ def similar(approval_id: str):
     return out({"mode": approval.get("precedent_mode"), "precedents": approval.get("precedents", [])})
 
 
+@app.get("/scoreboard")
+def scoreboard():
+    """The latest red-team receipt, written by `./warrant scoreboard`."""
+    path = CONSOLE.parent.parent / "docs" / "evidence" / "scoreboard.json"
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
 @app.get("/precedents/learned")
 def learned():
     """Rulings made since the last reset."""
