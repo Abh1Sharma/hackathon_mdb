@@ -464,7 +464,9 @@ async function brief(approvalId, textOnly) {
         approver_name: 'Sam',
         agent_name: 'Refund Agent 7',
         on_behalf_of: 'Dana, the ops lead',
-        action: q.tool === 'payments.refund' ? `refund ${amount} on order ${q.args.order_id}` : `${q.tool} ${amount}`,
+        action: q.tool === 'payments.refund'
+          ? `refund ${amount} on order ${q.args.order_id}${q.args.destination && q.args.destination !== 'original' ? ', sent to ' + q.args.destination + ' instead of the card that was charged' : ''}`
+          : `${q.tool} ${amount}`,
         rule: q.explanation,
         agent_reason: q.reason,
         customer_note: q.note || 'none',
