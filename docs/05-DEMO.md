@@ -30,7 +30,7 @@ The page has four tabs: **Demo**, **MongoDB live**, **Proof** and **Audit trail*
 | 0:14 | "Sam is watching, and he speaks up." | Press **2**. Step 2, "Sam speaks up". Warrant says "Warrant here. Go ahead, Sam." |
 | 0:18 | To Warrant: "Hey Warrant, Sam here. Flag this one. Refunds only go back to the original payment method." | The ruling appears in the Atlas column as a new document |
 | 0:28 | Warrant confirms and asks about the threshold. Answer: "Make it eighty percent." | The policy diff appears: 0.7 becomes 0.8, version 2 |
-| 0:40 | "Two writes to MongoDB Atlas. His ruling, which Atlas embedded itself, and one number on the rule." | Point at the "MongoDB Atlas, live" column |
+| 0:40 | "Two things changed in MongoDB Atlas. His ruling, which Atlas embedded itself, and one number on the rule." | Point at the "MongoDB Atlas, live" column |
 | 0:46 | "The same request again." | Press **3**. Step 3, "It never happens again" |
 | 0:50 | "Stopped. It cites what Sam said twenty seconds ago. Nothing was retrained." | The request is held, with Sam's words on the card |
 | 0:56 | "Twelve attacks: twelve get through with no gate, one with Warrant, zero after one ruling." | Open the **Proof** tab |
