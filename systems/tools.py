@@ -23,9 +23,11 @@ def _payment(db, doc: dict) -> dict:
         return db.sys_payments.find_one({"idempotency_key": doc["idempotency_key"]})
 
 
-def payments_refund(db, order_id: str, amount_cents: int, idempotency_key: str) -> dict:
+def payments_refund(db, order_id: str, amount_cents: int, idempotency_key: str,
+                    destination: str = "original") -> dict:
+    """Refund an order. `destination` is "original" (the payment method used) or another card."""
     return _payment(db, {"_id": f"rf_{idempotency_key[:16]}", "type": "refund", "order_id": order_id,
-                         "amount_cents": amount_cents, "status": "settled",
+                         "amount_cents": amount_cents, "destination": destination, "status": "settled",
                          "idempotency_key": idempotency_key, "created_at": now()})
 
 

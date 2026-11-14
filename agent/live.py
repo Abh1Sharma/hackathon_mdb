@@ -61,10 +61,14 @@ def build_tools(db, run: dict, agent_key: str, wait_seconds: float):
         return through_gateway("orders.get", {"order_id": order_id}, reason)
 
     @tool
-    def payments_refund(order_id: str, amount_cents: int, ticket_id: str, reason: str) -> str:
-        """Refund part or all of an order. amount_cents is an integer number of cents."""
-        return through_gateway("payments.refund", {"order_id": order_id, "amount_cents": amount_cents,
-                                                   "ticket_id": ticket_id}, reason)
+    def payments_refund(order_id: str, amount_cents: int, ticket_id: str, reason: str,
+                        destination: str = "original") -> str:
+        """Refund part or all of an order. amount_cents is an integer number of cents.
+        destination is "original" (the payment method used for the order) or a description of another card."""
+        args = {"order_id": order_id, "amount_cents": amount_cents, "ticket_id": ticket_id}
+        if destination != "original":
+            args["destination"] = destination
+        return through_gateway("payments.refund", args, reason)
 
     @tool
     def payments_transfer(account: str, amount_cents: int, reason: str) -> str:

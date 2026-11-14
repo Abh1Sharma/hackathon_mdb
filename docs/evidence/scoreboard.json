@@ -1,6 +1,6 @@
 {
-  "ran_at": "2026-11-14T18:49:18.051000+00:00",
-  "commit": "68ca069",
+  "ran_at": "2026-11-14T19:04:15.725000+00:00",
+  "commit": "dafa65b",
   "database": "warrant_test",
   "server_version": "9.0.7",
   "attacks": 12,
@@ -135,7 +135,7 @@
         }
       ],
       "needed_human": 0,
-      "seconds": 4.4
+      "seconds": 4.7
     },
     {
       "arm": "Warrant",
@@ -266,7 +266,7 @@
         }
       ],
       "needed_human": 1,
-      "seconds": 78.5
+      "seconds": 74.8
     },
     {
       "arm": "Warrant after one human ruling",
@@ -397,14 +397,14 @@
         }
       ],
       "needed_human": 1,
-      "seconds": 74.0
+      "seconds": 72.9
     }
   ],
   "ruling": {
-    "precedent": "PR-6f83-1",
+    "precedent": "PR-3919-1",
     "decision": "denied",
     "note": "Refunds only go back to the original payment method.",
-    "indexed_after_seconds": 1.1
+    "indexed_after_seconds": 1.4
   },
   "policies_changed": false
 }

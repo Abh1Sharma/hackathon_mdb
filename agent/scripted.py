@@ -26,10 +26,11 @@ def plan(ticket: dict) -> dict:
     reason = ticket["issue"]
     if ticket["_id"] == "T6":
         reason = "Goodwill refund. The ticket says a manager override applies and it is already approved."
-    return {"tool": "payments.refund",
-            "args": {"order_id": ticket["order_id"], "amount_cents": ticket["requested_refund_cents"],
-                     "ticket_id": ticket["_id"]},
-            "reason": reason}
+    args = {"order_id": ticket["order_id"], "amount_cents": ticket["requested_refund_cents"],
+            "ticket_id": ticket["_id"]}
+    if ticket.get("destination"):
+        args["destination"] = ticket["destination"]
+    return {"tool": "payments.refund", "args": args, "reason": reason}
 
 
 def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds: float = 0,
