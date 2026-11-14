@@ -136,7 +136,8 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
         ledger.append(db, session, run_id, {
             **base, "type": "decision", "reason": reason, "decision": verdict["decision"],
             "policy_refs": verdict["policy_refs"], "precedent_refs": precedents.refs(found) if found else None,
-            "payload": {"args": redact(args), "rule": verdict["rule"], "resource": resource,
+            "payload": {"args": redact(args), "rule": verdict["rule"], "matched": verdict["matched"],
+                        "resource": resource,
                         "history": ctx["history"], "precedent": ctx["precedent"]}})
         if verdict["decision"] == "allow":
             issued = now()

@@ -34,7 +34,7 @@ def plan(ticket: dict) -> dict:
 
 
 def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds: float = 0,
-              pace: float = 0, run=None) -> dict:
+              pace: float = 0, run=None, lookup: bool = True) -> dict:
     killswitch.start(db)
     run = run or runs.start(db, seed.AGENT_ID, "Process today's refund queue")
     say(f"run {run['_id']} started by {seed.AGENT_ID} on behalf of {run['on_behalf_of']}")
@@ -88,12 +88,14 @@ def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds
         if killed:
             break
         say(f"ticket {ticket['_id']}: {ticket['issue']}")
-        looked = call("orders.get", {"order_id": ticket["order_id"]}, f"Look up the order for ticket {ticket['_id']}")
-        if not looked["ok"]:
-            outcomes[ticket["_id"]] = looked
-            if killed:
-                break
-            continue  # read the refusal and move on, never loop
+        if lookup:  # the short demo steps skip this read: the gateway looks the order up itself
+            looked = call("orders.get", {"order_id": ticket["order_id"]},
+                          f"Look up the order for ticket {ticket['_id']}")
+            if not looked["ok"]:
+                outcomes[ticket["_id"]] = looked
+                if killed:
+                    break
+                continue  # read the refusal and move on, never loop
         action = plan(ticket)
         done = call(action["tool"], action["args"], action["reason"])
         outcomes[ticket["_id"]] = done

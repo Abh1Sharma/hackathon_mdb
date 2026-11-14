@@ -52,10 +52,11 @@ def uses_precedents(policy: dict, tool: str) -> bool:
 def evaluate(policies: list, ctx: dict) -> dict:
     """Returns decision, the policies that produced it (id and version), and the rule to show the agent."""
     matched = [p for p in policies if p.get("status") == "active" and matches(p, ctx)]
+    every = [{"id": p["_id"], "effect": p["effect"]} for p in matched]  # for the record: all rules that applied
     for effect, decision in (("deny", "deny"), ("step_up", "step_up"), ("allow", "allow")):
         hit = [p for p in matched if p["effect"] == effect]
         if hit:
             return {"decision": decision, "rule": hit[0]["_id"], "explanation": hit[0]["description"],
-                    "policy_refs": [{"id": p["_id"], "version": p["version"]} for p in hit]}
+                    "policy_refs": [{"id": p["_id"], "version": p["version"]} for p in hit], "matched": every}
     return {"decision": "deny", "rule": "DEFAULT-DENY", "explanation": "No policy allows this call",
-            "policy_refs": []}
+            "policy_refs": [], "matched": every}

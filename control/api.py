@@ -71,6 +71,7 @@ def out(value):
 class StartRun(BaseModel):
     tickets: list[str] | None = None
     label: str | None = None
+    lookup: bool = True
     mode: str | None = None  # defaults to WARRANT_AGENT_MODE, else scripted
     pace: float = 1.0
     wait_seconds: float = 300
@@ -114,7 +115,7 @@ def start_run(body: StartRun):
         target, kwargs = live.run_queue, {"ticket_ids": body.tickets, "wait_seconds": body.wait_seconds, "run": run}
     else:
         target, kwargs = scripted.run_queue, {"ticket_ids": body.tickets, "wait_seconds": body.wait_seconds,
-                                              "pace": body.pace, "run": run}
+                                              "pace": body.pace, "run": run, "lookup": body.lookup}
     threading.Thread(target=target, args=(db,), kwargs=kwargs, daemon=True, name=run["_id"]).start()
     return out({"run_id": run["_id"], "mode": mode})
 
@@ -161,7 +162,16 @@ def verify_run(run_id: str):
 
 @app.get("/approvals")
 def list_approvals(status: str = "pending"):
-    return out(list(get_db().approvals.find({"status": status}).sort("created_at", 1)))
+    query = {} if status == "all" else {"status": status}
+    return out(list(get_db().approvals.find(query).sort("created_at", 1)))
+
+
+@app.get("/policies")
+def list_policies():
+    """The written rules, as stored in Atlas. `uses_precedents` marks the rule that searches past decisions."""
+    return out([{"_id": p["_id"], "effect": p["effect"], "description": p["description"], "version": p["version"],
+                 "uses_precedents": any(c["field"].startswith("precedent.") for c in p["when"])}
+                for p in get_db().policies.find({"status": "active"}).sort("_id", 1)])
 
 
 @app.post("/approvals/{approval_id}/decision")
