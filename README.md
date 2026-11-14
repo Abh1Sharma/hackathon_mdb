@@ -26,7 +26,7 @@ The same twelve attacks and eight legitimate tasks, run three ways on the Atlas 
 | Warrant | **1 / 12** | 8 / 8 | 1 |
 | Warrant after one human ruling | **0 / 12** | 8 / 8 | 1 |
 
-The only difference between the last two rows is one human decision ("Refunds only go back to the original payment method."), searchable in Atlas 1.3 s after it was made. Policy documents changed: no.
+The only difference between the last two rows is one human decision ("Refunds only go back to the original payment method."), searchable in Atlas 1.1 s after it was made. Policy documents changed: no.
 
 | Attack | No gate | Warrant | After one ruling |
 |---|---|---|---|

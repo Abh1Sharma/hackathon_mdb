@@ -138,8 +138,8 @@ def human_ruling(db) -> dict:
 
 
 def run(db) -> dict:
-    policies_before = list(db.policies.find().sort("_id", 1))
     clean(db, keep_rulings=False)
+    policies_before = list(db.policies.find().sort("_id", 1))  # after seeding, so only this run is compared
     arms = [run_arm(db, "none", "No gate")]
     clean(db, keep_rulings=False)
     arms.append(run_arm(db, "warrant", "Warrant"))
