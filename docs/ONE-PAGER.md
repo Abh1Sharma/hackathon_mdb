@@ -11,10 +11,10 @@ An AI agent that can move money obeys every written rule and still pays requests
 Sam runs payments at a freight company, and an AI agent handles refund requests for him.
 
 1. A customer asks for $300 back, sent to someone else's card. It is under every limit, so the agent pays it.
-2. A $900 request of the same kind is over the agent's limit, so the checkpoint asks Sam. He says no, out loud, with a reason.
-3. The same $300 request returns and is held, citing his words. **No rule was edited and nothing was retrained.**
+2. Sam, who is watching, tells Warrant out loud that refunds only go back to the original payment method. Warrant records the ruling and asks whether he wants a different similarity threshold.
+3. The same $300 request returns and is held, citing his words. **Nothing was retrained and no rule was rewritten.**
 
-Atlas stored the ruling, embedded it itself and had it searchable about a second later. Rules are the statute. Human decisions are the case law. Both live in Atlas.
+Atlas stored the ruling, embedded it itself and had it searchable about a second later. The threshold is one number on a policy document, and every change to it is versioned. Rules are the statute. Human decisions are the case law. Both live in Atlas.
 
 ## The numbers
 
@@ -47,7 +47,7 @@ Claude Opus 5.5 alone, with the rules in its prompt and no gate (three trials): 
 
 ## What is real and what is not
 
-Real: the gateway, policy engine, ledger, search pipeline, voice approval, kill, rollback, a live Claude agent on LangGraph, and 44 acceptance tests that run against the Atlas cluster.
+Real: the gateway, policy engine, ledger, search pipeline, voice approval, kill, rollback, a live Claude agent on LangGraph, and 46 acceptance tests that run against the Atlas cluster.
 
 Mocked or limited: the business systems (orders, payments, CRM, email) are collections. Identities are demo keys. The ledger is append-only by convention plus a hash chain, not yet by database role. The similarity threshold is tuned on a small seed set. The scoreboard's agent is scripted to attempt each attack, and the model baseline is three trials per case.
 

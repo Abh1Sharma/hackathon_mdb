@@ -17,7 +17,7 @@ Warrant is a checkpoint between the agent and the money. Every action is checked
 
 Sam, the person who approves refunds, says no once, out loud. Atlas stores that ruling, embeds it itself (Automated Embedding) and has it searchable about a second later, so the next similar request is stopped, citing his words, with no retraining, no prompt edit and no new rule.
 
-![Sam's ruling stops the same $300 request when it is sent again](docs/img/console-learned.jpg)
+![Step 2: Sam's spoken ruling and the threshold he set, shown as the two writes they made to MongoDB Atlas](docs/img/console-learned.jpg)
 
 **The moment:** three steps. First, a customer asks for $300 back, sent to someone else's card. It is under every limit, so the agent pays it. Second, Sam, who is watching, tells Warrant out loud that refunds only go back to the original payment method. Warrant writes that ruling to Atlas and asks whether he wants a different similarity threshold. Third, the same $300 request returns and is held, citing Sam's words. Nothing was retrained and no rule was rewritten. One page for judges: [docs/ONE-PAGER.md](docs/ONE-PAGER.md).
 
@@ -168,7 +168,7 @@ In the console, keys 1 to 3 walk the demo: a customer's $300 request is paid, a 
 | `./warrant precedents "<text>"` | The precedent pipeline on its own, with rerank and fusion scores |
 | `./warrant scoreboard` | Red team: twelve attacks and eight legitimate tasks, with and without the gate |
 | `./warrant baseline` | A live model with the rules in its prompt and no gate. Spends API credit |
-| `uv run --env-file .env pytest` | 44 acceptance tests against the cluster, in a separate `warrant_test` database |
+| `uv run --env-file .env pytest` | 46 acceptance tests against the cluster, in a separate `warrant_test` database |
 
 ## Layout
 

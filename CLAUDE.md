@@ -95,7 +95,7 @@ Paste this to start the session at 10:45:
 | Agents | `agent/scripted.py`, `agent/live.py` | scripted is the stage default. Live is Claude Opus 5.5 on LangGraph with the MongoDB checkpointer, verified |
 | Voice | `voice/agent.md` | ElevenLabs agent "Warrant Approvals Desk". Its id is in `.env` as `ELEVENLABS_AGENT_ID`, never in the repo. Three client tools: `submit_decision`, `flag_request`, `set_threshold`. Verified in typed mode only |
 | Red team | `evals/`, `checks/hidden.py`, `./warrant scoreboard` | 12 attacks and 8 legitimate tasks, three arms: 12/12, 1/12, 0/12 executed. Receipt in `docs/evidence/scoreboard.json` |
-| Tests | `tests/` | 44 acceptance tests against the cluster, in database `warrant_test`. IDs match the spec (AT-01 to AT-17) |
+| Tests | `tests/` | 46 acceptance tests against the cluster, in database `warrant_test`. IDs run AT-01 to AT-19. AT-18 is the flag, AT-19 the threshold |
 
 ### Commands
 

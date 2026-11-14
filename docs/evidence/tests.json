@@ -1,89 +1,89 @@
 {
- "at": "2026-11-14T20:37:31+00:00",
+ "at": "2026-11-14T21:00:54+00:00",
  "database": "warrant_test",
- "passed": 44,
+ "passed": 46,
  "failed": 0,
- "seconds": 152,
+ "seconds": 174,
  "cases": [
   {
    "id": "tests/test_control.py::test_at06_kill_refuses_the_next_call_and_revokes_unused_warrants",
    "outcome": "passed",
-   "seconds": 7.57
+   "seconds": 7.61
   },
   {
    "id": "tests/test_control.py::test_at07_rollback_compensates_reversible_steps_and_reports_the_rest",
    "outcome": "passed",
-   "seconds": 16.76
+   "seconds": 14.86
   },
   {
    "id": "tests/test_control.py::test_at08_step_up_pauses_until_a_human_approves",
    "outcome": "passed",
-   "seconds": 9.75
+   "seconds": 9.15
   },
   {
    "id": "tests/test_control.py::test_step_up_denied_by_a_human_stays_denied",
    "outcome": "passed",
-   "seconds": 6.2
+   "seconds": 5.49
   },
   {
    "id": "tests/test_control.py::test_at11_reconstruction_lists_every_step",
    "outcome": "passed",
-   "seconds": 12.08
+   "seconds": 11.51
   },
   {
    "id": "tests/test_control.py::test_voice_decision_needs_the_challenge_code",
    "outcome": "passed",
-   "seconds": 6.2
+   "seconds": 5.86
   },
   {
    "id": "tests/test_gateway.py::test_at01_allowed_refund_is_executed_verified_and_recorded",
    "outcome": "passed",
-   "seconds": 8.96
+   "seconds": 8.07
   },
   {
    "id": "tests/test_gateway.py::test_at02_out_of_region_is_denied_before_it_runs",
    "outcome": "passed",
-   "seconds": 1.88
+   "seconds": 2.37
   },
   {
    "id": "tests/test_gateway.py::test_at03_injected_transfer_is_attempted_and_denied",
    "outcome": "passed",
-   "seconds": 3.85
+   "seconds": 3.59
   },
   {
    "id": "tests/test_gateway.py::test_at04_a_used_warrant_cannot_be_replayed",
    "outcome": "passed",
-   "seconds": 4.81
+   "seconds": 3.49
   },
   {
    "id": "tests/test_gateway.py::test_at05_a_warrant_is_bound_to_its_arguments",
    "outcome": "passed",
-   "seconds": 2.64
+   "seconds": 2.51
   },
   {
    "id": "tests/test_gateway.py::test_fr01_fr02_identity_and_reason_are_required",
    "outcome": "passed",
-   "seconds": 0.92
+   "seconds": 0.94
   },
   {
    "id": "tests/test_gateway.py::test_at12_run_cap_is_computed_from_the_ledger",
    "outcome": "passed",
-   "seconds": 18.58
+   "seconds": 20.49
   },
   {
    "id": "tests/test_gateway.py::test_tampering_with_the_ledger_is_detected",
    "outcome": "passed",
-   "seconds": 8.65
+   "seconds": 7.82
   },
   {
    "id": "tests/test_m0.py::test_at10_ledger_rejects_missing_required_field",
    "outcome": "passed",
-   "seconds": 0.1
+   "seconds": 0.09
   },
   {
    "id": "tests/test_m0.py::test_at10_ledger_rejects_unknown_field_and_bad_enum",
    "outcome": "passed",
-   "seconds": 0.19
+   "seconds": 0.18
   },
   {
    "id": "tests/test_m0.py::test_ledger_accepts_a_valid_entry",
@@ -93,12 +93,12 @@
   {
    "id": "tests/test_m0.py::test_warrant_is_one_per_step",
    "outcome": "passed",
-   "seconds": 0.19
+   "seconds": 0.18
   },
   {
    "id": "tests/test_m0.py::test_seed_is_complete_and_reset_is_fast",
    "outcome": "passed",
-   "seconds": 2.29
+   "seconds": 3.44
   },
   {
    "id": "tests/test_m0.py::test_canonical_is_stable_and_survives_a_database_round_trip",
@@ -198,32 +198,42 @@
   {
    "id": "tests/test_precedents.py::test_at16_override_request_matches_a_denied_precedent",
    "outcome": "passed",
-   "seconds": 0.31
+   "seconds": 0.34
   },
   {
    "id": "tests/test_precedents.py::test_at16_ordinary_requests_match_approved_precedents",
    "outcome": "passed",
-   "seconds": 0.98
+   "seconds": 1.47
   },
   {
    "id": "tests/test_precedents.py::test_tool_filter_is_applied",
    "outcome": "passed",
-   "seconds": 0.29
+   "seconds": 0.3
   },
   {
    "id": "tests/test_precedents.py::test_at14_override_refund_is_raised_to_step_up_by_precedent",
    "outcome": "passed",
-   "seconds": 13.05
+   "seconds": 14.7
   },
   {
    "id": "tests/test_precedents.py::test_at13_step_up_request_carries_precedents",
    "outcome": "passed",
-   "seconds": 4.63
+   "seconds": 4.29
   },
   {
    "id": "tests/test_precedents.py::test_at17_a_human_ruling_tightens_the_next_similar_request",
    "outcome": "passed",
-   "seconds": 20.31
+   "seconds": 22.47
+  },
+  {
+   "id": "tests/test_precedents.py::test_at18_a_human_flag_on_a_paid_request_holds_the_next_one",
+   "outcome": "passed",
+   "seconds": 14.49
+  },
+  {
+   "id": "tests/test_precedents.py::test_at19_the_similarity_threshold_is_a_versioned_policy_parameter",
+   "outcome": "passed",
+   "seconds": 7.94
   }
  ]
 }
