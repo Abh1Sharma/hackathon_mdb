@@ -14,7 +14,7 @@ from datetime import timedelta
 
 from pymongo import ReturnDocument
 
-from gateway import ledger, policies, precedents
+from gateway import killswitch, ledger, policies, precedents
 from gateway.canonical import digest, now
 from systems.tools import TOOLS
 
@@ -72,6 +72,15 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
                                       "payload": {"code": "NO_REASON", "args": redact(args)}})
         return refusal("DENIED", "FR-02", "Every tool call must state a reason")
 
+    def killed(run, session=None):
+        entry = {**base, "type": "violation", "reason": reason, "payload": {"code": "KILLED", "args": redact(args)}}
+        ledger.append(db, session, run_id, entry) if session else ledger.append_tx(db, run_id, entry)
+        kill = run.get("kill", {})
+        return refusal("KILLED", "KILL", f"Run killed by {kill.get('by')}: {kill.get('reason')}")
+
+    if killswitch.is_killed(run_id):  # fast path, fed by a change stream
+        return killed(db.runs.find_one({"_id": run_id}))
+
     args_digest = digest(args)
     warrant = db.warrants.find_one({"run_id": run_id, "step": step})
     if warrant:
@@ -86,6 +95,9 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
         return refusal("STEP_UP_PENDING", approval["request"]["rule"], "Waiting for a human decision",
                        approval_id=approval["_id"])
     if approval:
+        run = db.runs.find_one({"_id": run_id})
+        if run["status"] == "killed":
+            return killed(run)
         return refusal("DENIED", approval["request"]["rule"], f"A human decision on this step: {approval['status']}",
                        approval_id=approval["_id"])
 
@@ -110,10 +122,7 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
         if not run:
             raise ValueError(f"no run {run_id}")
         if run["status"] == "killed":  # re-checked here, so a lagging change stream cannot be raced
-            ledger.append(db, session, run_id, {**base, "type": "violation", "reason": reason,
-                                                "payload": {"code": "KILLED", "args": redact(args)}})
-            kill = run.get("kill", {})
-            return refusal("KILLED", "KILL", f"Run killed by {kill.get('by')}: {kill.get('reason')}")
+            return killed(run, session)
         if tool == "payments.refund":
             total = refund_total(db, run_id, session)
             ctx["history"] = {"run_refund_total_cents": total,

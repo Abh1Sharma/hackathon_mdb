@@ -5,8 +5,10 @@ and attempts a transfer, on T6 it takes the "manager override" at face value.
 The gateway is what stops them.
 """
 
+import time
+
 from cli import seed
-from gateway import runs
+from gateway import killswitch, runs
 from gateway.gateway import call_tool
 from gateway.precedents import money
 
@@ -30,41 +32,92 @@ def plan(ticket: dict) -> dict:
             "reason": reason}
 
 
-def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, on_step=None) -> dict:
-    run = runs.start(db, seed.AGENT_ID, "Process today's refund queue")
-    say(f"run {run['_id']} started by {seed.AGENT_ID} on behalf of {run['on_behalf_of']}")
-    step = 0
-    outcomes = {}
+def wait_for_decisions(db, approval_ids: list, seconds: float) -> dict:
+    """Block until humans decide, using a change stream on approvals (no polling)."""
+    waiting, decided = set(approval_ids), {}
+    deadline = time.time() + seconds
+    pipeline = [{"$match": {"documentKey._id": {"$in": approval_ids}}}]
+    with db.approvals.watch(pipeline, full_document="updateLookup", max_await_time_ms=500) as stream:
+        for a in db.approvals.find({"_id": {"$in": approval_ids}, "status": {"$ne": "pending"}}):
+            decided[a["_id"]] = a["status"]
+            waiting.discard(a["_id"])
+        while waiting and time.time() < deadline:
+            event = stream.try_next()
+            doc = (event or {}).get("fullDocument")
+            if doc and doc["status"] != "pending":
+                decided[doc["_id"]] = doc["status"]
+                waiting.discard(doc["_id"])
+    return decided
 
-    def call(tool, args, reason):
-        nonlocal step
-        step += 1
+
+def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds: float = 0,
+              pace: float = 0, run=None) -> dict:
+    killswitch.start(db)
+    run = run or runs.start(db, seed.AGENT_ID, "Process today's refund queue")
+    say(f"run {run['_id']} started by {seed.AGENT_ID} on behalf of {run['on_behalf_of']}")
+    counter = 0
+    outcomes, paused = {}, []
+
+    def call(tool, args, reason, step=None):
+        nonlocal counter
+        if step is None:
+            counter += 1
+            step = counter
+            if pace:
+                time.sleep(pace)
         out = call_tool(db, agent_key=agent_key, run_id=run["_id"], step=step, tool=tool, args=args, reason=reason)
         if out["ok"]:
-            say(f"  [{step}] {tool:<20} ALLOWED   verified={out['verified']}")
+            say(f"  [{step}] {tool:<18} ALLOWED          verified={out['verified']}")
         else:
-            say(f"  [{step}] {tool:<20} {out['code']:<16} {out['rule']}: {out['explanation']}")
-        if on_step:
-            on_step(step, tool, out)
+            say(f"  [{step}] {tool:<18} {out['code']:<16} {out['rule']}: {out['explanation']}")
         return {**out, "step": step}
 
+    def notify(ticket, action):
+        amount = money(action["args"]["amount_cents"])
+        return call("email.send", {"customer_id": ticket["customer_id"], "subject": f"Your refund of {amount}",
+                                   "body": f"We have refunded {amount} for order {ticket['order_id']}."},
+                    f"Tell the customer about the refund for ticket {ticket['_id']}")
+
+    def was_killed(out):
+        return not out["ok"] and out["code"] == "KILLED"
+
+    killed = False
     tickets = list(db.sys_tickets.find({"_id": {"$in": ticket_ids}} if ticket_ids else {}).sort("_id", 1))
     for ticket in tickets:
         say(f"ticket {ticket['_id']}: {ticket['issue']}")
         looked = call("orders.get", {"order_id": ticket["order_id"]}, f"Look up the order for ticket {ticket['_id']}")
         if not looked["ok"]:
             outcomes[ticket["_id"]] = looked
-            if looked["code"] == "KILLED":
+            if was_killed(looked):
+                killed = True
                 break
-            continue
+            continue  # read the refusal and move on, never loop
         action = plan(ticket)
         done = call(action["tool"], action["args"], action["reason"])
         outcomes[ticket["_id"]] = done
-        if not done["ok"] and done["code"] == "KILLED":
+        if was_killed(done):
+            killed = True
             break
-        if done["ok"] and action["tool"] == "payments.refund":
-            amount = money(action["args"]["amount_cents"])
-            call("email.send", {"customer_id": ticket["customer_id"], "subject": f"Your refund of {amount}",
-                                "body": f"We have refunded {amount} for order {ticket['order_id']}."},
-                 f"Tell the customer about the refund for ticket {ticket['_id']}")
-    return {"run_id": run["_id"], "outcomes": outcomes, "steps": step}
+        if not done["ok"] and done["code"] == "STEP_UP_PENDING":
+            paused.append((ticket, action, done))
+        elif done["ok"] and action["tool"] == "payments.refund":
+            if was_killed(notify(ticket, action)):
+                killed = True
+                break
+
+    if paused and wait_seconds and not killed:
+        say(f"waiting up to {wait_seconds:.0f}s for a human on steps {[d['step'] for _, _, d in paused]}")
+        decided = wait_for_decisions(db, [d["approval_id"] for _, _, d in paused], wait_seconds)
+        for ticket, action, first in paused:
+            status = decided.get(first["approval_id"], "pending")
+            say(f"ticket {ticket['_id']}: human decision is {status}")
+            if status != "approved":
+                continue
+            done = call(action["tool"], action["args"], action["reason"], step=first["step"])  # same step, same warrant
+            outcomes[ticket["_id"]] = done
+            if was_killed(done) or (done["ok"] and was_killed(notify(ticket, action))):
+                killed = True
+                break
+    if not killed:
+        runs.finish(db, run["_id"])
+    return {"run_id": run["_id"], "outcomes": outcomes, "steps": counter, "killed": killed}
