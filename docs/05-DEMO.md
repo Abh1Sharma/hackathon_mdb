@@ -28,11 +28,11 @@ The page opens with a short preamble, "Meet Sam", and three cards: The problem, 
 | 0:00 | "This is Sam. An AI agent handles refunds for him. Watch what it does with this one." | Press **1**. Step 1, "A request no rule covers" |
 | 0:06 | "Three hundred dollars, to someone else's card. It broke no rule, so it was paid. A person would have said no." | The customer's message appears, then the $300 refund is allowed and paid |
 | 0:15 | "A bigger one of the same kind is over the agent's limit, so the checkpoint asks Sam." | Press **2**. Step 2, "Sam is asked once". The $900 request appears in Sam's review inbox |
-| 0:22 | Listen to the one-sentence briefing. Then say: "Deny. Refunds only go back to the original payment method. The code is" and the three digits on screen | Start the voice briefing on the review card |
+| 0:22 | Listen to the one-sentence briefing. Then say: "Deny. Refunds only go back to the original payment method. The code is" and the three digits on screen | Click **Decide by voice** on the review card. Fallback: type the reason and click **Deny** |
 | 0:38 | "That ruling is now in MongoDB Atlas. Atlas embedded it itself." | Wait until the page shows the ruling is saved and indexed |
 | 0:42 | "The same three hundred dollar request again." | Press **3**. Step 3, "It never happens again" |
 | 0:47 | "Stopped. It cites what I said twenty seconds ago. No rule edited, no retraining. One Atlas aggregation: vector and text search fused, then reranked." | The request is held, with Sam's ruling and his words on the card |
-| 0:56 | "Twelve attacks: twelve get through with no gate, one with Warrant, zero after that one ruling." | Open **Red team**: 12, 1, 0 |
+| 0:56 | "Twelve attacks: twelve get through with no gate, one with Warrant, zero after that one ruling." | Scroll to the **Red team** line under the stage: 12, 1, 0 |
 
 Fallback for the voice step: type the reason and click **Deny**. Every step is also a button. The voice step is the part most likely to run long, so if it does in rehearsal, use the typed reason. If the network dies, play the video and narrate.
 
