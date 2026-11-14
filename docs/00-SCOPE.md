@@ -84,6 +84,7 @@ Built only after the M3 gate is green, with the button path always working. Need
 | AT-14 | A denied override-style precedent exists | The agent requests the T6 refund | Decision is step-up citing P-009 and the precedent ID. With precedents removed, the same call is allowed by P-002 |
 | AT-15 | Any request the deterministic rules deny | Precedents say "approved" | Still denied (evaluator unit test) |
 | AT-16 | Seeded precedents | `warrant precedents "<text>"` runs | Prints top 3 with fusion and rerank scores, from one aggregation |
+| AT-17 | T8 is allowed on a fresh seed | A human denies T7, then T8 arrives in a new run | T8 is step-up citing P-009 and the new precedent, the approval card shows the human's words, and no policy document changed |
 
 ## Cuts made now, to pay for it
 

@@ -90,7 +90,7 @@ def decide_approval(db, approval_id: str, approver: str, decision: str, channel:
         # The human's decision and their own words become case law for the next similar request.
         request = out.pop("approval")["request"]
         db.precedents.insert_one({
-            "_id": f"PR-{approval_id}", "tool": request["tool"], "amount_cents": request["args"].get("amount_cents"),
+            "_id": f"PR-{approval_id.split('_')[-2]}-{approval_id.split('_')[-1]}", "tool": request["tool"], "amount_cents": request["args"].get("amount_cents"),
             "region": request["resource"].get("region"), "reason": request["reason"], "note": request["note"],
             "summary": request["summary"], "decision": decision, "decided_by": approver, "channel": channel,
             "outcome_note": note, "approval_id": approval_id, "seeded": False, "created_at": now()})

@@ -89,3 +89,34 @@ def test_at13_step_up_request_carries_precedents(indexed):
     assert approval["precedents"][0]["decision"] == "approved" and "rerank_score" in approval["precedents"][0]
     decision = [e for e in ledger.entries(indexed, out["run_id"]) if e.get("decision") == "step_up"][0]
     assert [r["id"] for r in decision["precedent_refs"]] == [p["_id"] for p in approval["precedents"]]
+
+
+def test_at17_a_human_ruling_tightens_the_next_similar_request(indexed):
+    """The learning loop. Same ticket, before and after a human ruled on a similar one. No rule is edited."""
+    from agent import scripted
+    from cli import seed
+    from gateway import control, ledger
+
+    before = scripted.run_queue(indexed, ["T8"])["outcomes"]["T8"]
+    assert before["ok"] is True  # $300, in region, under every limit, nothing like it was ever refused
+
+    seed.reset(indexed)
+    policies_before = list(indexed.policies.find().sort("_id", 1))
+    first = scripted.run_queue(indexed, ["T7"])
+    paused = first["outcomes"]["T7"]
+    assert paused["code"] == "STEP_UP_PENDING"
+    indexed.runs.update_one({"_id": first["run_id"]}, {"$set": {"status": "running"}})
+    words = "Refunds only go back to the original payment method."
+    assert control.decide_approval(indexed, paused["approval_id"], "human:sam", "denied", note=words)["ok"]
+    ruling = indexed.precedents.find_one({"approval_id": paused["approval_id"]})
+    assert precedents.wait_until_searchable(indexed, ruling) is not None  # Atlas embeds it asynchronously
+
+    later = scripted.run_queue(indexed, ["T8"])  # a different run: the knowledge lives in Atlas, not in the agent
+    after = later["outcomes"]["T8"]
+    assert after["code"] == "STEP_UP_PENDING" and after["rule"] == "P-009"
+    assert indexed.sys_payments.count_documents({}) == 0
+    decision = [e for e in ledger.entries(indexed, later["run_id"]) if e.get("tool") == "payments.refund"][0]
+    assert decision["precedent_refs"][0]["id"] == ruling["_id"]
+    card = indexed.approvals.find_one({"_id": after["approval_id"]})["precedents"][0]
+    assert card["outcome_note"] == words and card["seeded"] is False  # the approver sees the human's own words
+    assert list(indexed.policies.find().sort("_id", 1)) == policies_before

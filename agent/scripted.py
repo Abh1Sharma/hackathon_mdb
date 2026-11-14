@@ -81,7 +81,7 @@ def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds
                 if not killed:
                     resume(approval)
 
-    tickets = list(db.sys_tickets.find({"_id": {"$in": ticket_ids}} if ticket_ids else {}).sort("_id", 1))
+    tickets = list(db.sys_tickets.find({"_id": {"$in": ticket_ids}} if ticket_ids else {"wave": 1}).sort("_id", 1))
     for ticket in tickets:
         resume_decided()
         if killed:

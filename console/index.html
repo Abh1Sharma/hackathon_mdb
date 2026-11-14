@@ -18,6 +18,8 @@
   button:hover { border-color:var(--dim); }
   button:disabled { opacity:.4; cursor:default; }
   button.kill { background:#3a1616; border-color:#7a2b2b; color:#ffb3b3; font-weight:600; }
+  select { font:inherit; color:var(--text); background:#1d2b24; border:1px solid var(--line); border-radius:6px; padding:6px 8px; max-width:190px; }
+  .new-tag { color:#0e1512; background:var(--amber); border-radius:4px; padding:1px 6px; font-size:11px; font-weight:700; }
   button.go { background:#123222; border-color:#1f6b45; color:#aef5cd; font-weight:600; }
   main { display:grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap:16px; padding:16px 18px; }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
@@ -61,7 +63,9 @@
   <span id="status" class="status">no run</span>
   <span id="runid"></span>
   <span class="spacer"></span>
+  <select id="runs" title="Switch run"></select>
   <button class="go" id="start">Start run</button>
+  <button id="late" title="A new run with one ticket that arrives later (T8)">Late ticket</button>
   <button class="kill" id="kill" disabled>Kill</button>
   <button id="rollback" disabled>Rollback</button>
   <button id="verify" disabled>Verify chain</button>
@@ -136,7 +140,7 @@ function renderApprovals() {
   $('approvals').innerHTML = pending.map(a => {
     const q = a.request;
     const precs = (a.precedents || []).map(p => `<div class="prec ${p.decision}">
-        <b class="${p.decision}">${p.decision}</b> <span class="dim mono">${esc(p._id)} · ${a.precedent_mode === 'rerank' ? 'rerank ' + Number(p.rerank_score).toFixed(2) : 'fused'}</span><br>
+        <b class="${p.decision}">${p.decision}</b> ${p.seeded === false ? '<span class="new-tag">LEARNED THIS SESSION</span> ' : ''}<span class="dim mono">${esc(p._id)} · ${a.precedent_mode === 'rerank' ? 'rerank ' + Number(p.rerank_score).toFixed(2) : 'fused'}</span><br>
         ${esc(p.summary)}<br><span class="dim">${esc(p.decided_by || '')}: ${esc(p.outcome_note || '')}</span></div>`).join('');
     return `<div class="card" data-id="${esc(a._id)}">
       <h3>${esc(q.tool)} ${q.args.amount_cents ? money(q.args.amount_cents) : ''} <span class="dim">step ${a.step}</span></h3>
@@ -167,13 +171,26 @@ function setRun(run) {
 
 function report(html) { $('report').className = ''; $('report').innerHTML = html; }
 
+async function listRuns() {
+  const list = await api('/runs');
+  $('runs').innerHTML = list.map(r => `<option value="${esc(r._id)}" ${r._id === runId ? 'selected' : ''}>${esc(r._id)} · ${esc(r.status.replace('_', ' '))}</option>`).join('');
+  return list;
+}
+
 async function loadRun(id) {
   entries.clear();
+  runId = id;
   setRun(await api(`/runs/${id}`));
   (await api(`/runs/${id}/ledger`)).forEach(e => entries.set(e._id, e));
   (await api('/approvals?status=pending')).forEach(a => approvals.set(a._id, a));
-  renderTimeline(); renderApprovals();
+  renderTimeline(); renderApprovals(); listRuns();
 }
+$('runs').onchange = ev => loadRun(ev.target.value);
+$('late').onclick = async () => {
+  entries.clear(); $('timeline').innerHTML = '<div class="empty">A new run: one ticket that arrived later.</div>';
+  const {run_id} = await api('/runs', {tickets: ['T8'], pace: 0.5, mode: 'scripted'});
+  await loadRun(run_id);
+};
 
 $('start').onclick = async () => {
   entries.clear(); $('timeline').innerHTML = '<div class="empty">Starting…</div>';
@@ -288,10 +305,12 @@ feed.onmessage = m => {
   if (coll === 'ledger' && doc.run_id === runId) { entries.set(doc._id, doc); renderTimeline(doc._id); }
   if (coll === 'runs' && doc._id === runId) setRun(doc);
   if (coll === 'approvals') { approvals.set(doc._id, doc); renderApprovals(); }
+  if (coll === 'runs') listRuns();
+  if (coll === 'precedents') report(`<div><b style="color:var(--amber)">Learned.</b> Precedent <span class="mono">${esc(doc._id)}</span> (${esc(doc.decision)}) was embedded and indexed by Atlas ${doc.seconds == null ? '' : 'in about ' + doc.seconds + ' s'}. The next similar request will find it.</div>${doc.outcome_note ? `<div class="dim">“${esc(doc.outcome_note)}”</div>` : ''}`);
 };
 
 api('/config').then(c => { cfg = c; renderApprovals(); });
-api('/runs').then(list => list.length && loadRun(list[0]._id));
+listRuns().then(list => list.length && loadRun(list[0]._id));
 </script>
 </body>
 </html>

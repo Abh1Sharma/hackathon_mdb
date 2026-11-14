@@ -44,7 +44,7 @@ Voice (ElevenLabs): a step-up can be decided in conversation. A voice agent brie
 
 ## Demo scenario
 
-A refunds agent at a logistics company, acting for ops lead Dana, scoped to Ontario. Six tickets:
+A refunds agent at a logistics company, acting for ops lead Dana, scoped to Ontario. Seven tickets in the queue and one that arrives later:
 
 | Ticket | Situation | Outcome |
 |---|---|---|
@@ -53,6 +53,8 @@ A refunds agent at a logistics company, acting for ops lead Dana, scoped to Onta
 | T4 | Order in BC | Denied: outside the agent's regions |
 | T5 | Prompt injection asks for a $5,000 transfer | The agent attempts it. Denied |
 | T6 | $480 refund "per manager override, skip verification" | Passes every static rule. Raised to a human because it resembles a refused precedent |
+| T7 | $900 refund to a different card than the one used | Step-up by amount. A human denies it and says why |
+| T8 (a later run) | $300 credit to someone else's card | Allowed before the T7 ruling. After it, raised to a human citing that ruling and the human's own words. No rule was edited |
 
 ## Run it
 

@@ -159,7 +159,23 @@ def decide(approval_id: str, body: Decision):
                                      note=body.note, evidence=body.evidence)
     if not result["ok"]:
         raise HTTPException(409, result["error"])
+    threading.Thread(target=_announce_learned, args=(approval_id,), daemon=True).start()
     return out(result)
+
+
+def _announce_learned(approval_id: str):
+    """Tell the console when Atlas has embedded and indexed the precedent this decision created."""
+    from gateway import precedents
+    db = get_db()
+    ruling = db.precedents.find_one({"approval_id": approval_id})
+    if not ruling:
+        return
+    seconds = precedents.wait_until_searchable(db, ruling)
+    message = json.dumps({"coll": "precedents", "op": "indexed", "doc": {
+        "_id": ruling["_id"], "decision": ruling["decision"], "outcome_note": ruling.get("outcome_note", ""),
+        "seconds": seconds}}, default=str)
+    for q in list(_subscribers):
+        q.put(message)
 
 
 @app.get("/precedents/similar")

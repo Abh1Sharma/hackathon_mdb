@@ -112,7 +112,7 @@ def run_queue(db, ticket_ids=None, agent_key: str = seed.AGENT_KEY, wait_seconds
     killswitch.start(db)
     run = run or runs.start(db, seed.AGENT_ID, "Process today's refund queue")
     say(f"run {run['_id']} started by {seed.AGENT_ID} on behalf of {run['on_behalf_of']} (live model: {MODEL})")
-    tickets = list(db.sys_tickets.find({"_id": {"$in": ticket_ids}} if ticket_ids else {}).sort("_id", 1))
+    tickets = list(db.sys_tickets.find({"_id": {"$in": ticket_ids}} if ticket_ids else {"wave": 1}).sort("_id", 1))
     queue = "\n\n".join(
         f"Ticket {t['_id']}\norder: {t['order_id']}\ncustomer: {t['customer_id']}\nissue: {t['issue']}\n"
         f"requested refund (cents): {t['requested_refund_cents']}\ncustomer note: {t['customer_note']}"

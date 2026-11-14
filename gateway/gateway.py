@@ -79,8 +79,13 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
         kill = run.get("kill", {})
         return refusal("KILLED", "KILL", f"Run killed by {kill.get('by')}: {kill.get('reason')}")
 
-    if killswitch.is_killed(run_id):  # fast path, fed by a change stream
-        return killed(db.runs.find_one({"_id": run_id}))
+    # A stopped run is refused before anything else is looked up. The change stream flag is the hint,
+    # this read is the check, and the decision transaction below checks once more.
+    run = db.runs.find_one({"_id": run_id}, {"status": 1, "kill": 1})
+    if not run:
+        raise ValueError(f"no run {run_id}")
+    if run["status"] == "killed" or killswitch.is_killed(run_id):
+        return killed(run if run["status"] == "killed" else db.runs.find_one({"_id": run_id}))
 
     args_digest = digest(args)
     warrant = db.warrants.find_one({"run_id": run_id, "step": step})
@@ -96,9 +101,6 @@ def authorize(db, *, agent_key: str, run_id: str, step: int, tool: str, args: di
         return refusal("STEP_UP_PENDING", approval["request"]["rule"], "Waiting for a human decision",
                        approval_id=approval["_id"])
     if approval:
-        run = db.runs.find_one({"_id": run_id})
-        if run["status"] == "killed":
-            return killed(run)
         return refusal("DENIED", approval["request"]["rule"], f"A human decision on this step: {approval['status']}",
                        approval_id=approval["_id"])
 

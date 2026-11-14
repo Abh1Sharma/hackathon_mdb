@@ -48,7 +48,8 @@ def test_seed_is_complete_and_reset_is_fast(db):
     t0 = time.time()
     seed.reset(db)
     assert time.time() - t0 < 10
-    assert db.sys_tickets.count_documents({}) == 6
+    assert db.sys_tickets.count_documents({}) == 8
+    assert db.sys_tickets.count_documents({"wave": 1}) == 7
     assert db.policies.count_documents({"status": "active"}) == len(seed.POLICIES)
     assert db.precedents.count_documents({"seeded": True}) == 20
     assert db.identities.find_one({"key_hash": seed.key_hash(seed.AGENT_KEY)})["_id"] == seed.AGENT_ID

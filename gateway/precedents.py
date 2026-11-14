@@ -68,7 +68,7 @@ def pipeline(text: str, tool: str | None = None, k: int = 3, rerank: bool = True
     stages += [
         {"$limit": k},
         {"$project": {"tool": 1, "decision": 1, "summary": 1, "decided_by": 1, "outcome_note": 1,
-                      "amount_cents": 1, "fusion_score": 1, "rerank_score": 1}},
+                      "amount_cents": 1, "seeded": 1, "created_at": 1, "fusion_score": 1, "rerank_score": 1}},
     ]
     return stages
 
@@ -109,3 +109,18 @@ def refs(result: dict) -> list:
     """Compact citations for the ledger."""
     return [{"id": h["_id"], "decision": h["decision"],
              "score": round(h.get("rerank_score", h.get("fusion_score", 0.0)), 4)} for h in result["hits"]]
+
+
+def wait_until_searchable(db, precedent: dict, timeout: float = 90) -> float | None:
+    """Seconds until Atlas has embedded and indexed a new precedent, or None on timeout.
+
+    Automated Embedding is asynchronous: Atlas picks the insert up from a change stream,
+    embeds the summary and updates the index. This measures that delay from the outside.
+    """
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        hits = search(db, precedent["summary"], tool=precedent["tool"], k=5)["hits"]
+        if any(h["_id"] == precedent["_id"] for h in hits):
+            return round(time.time() - t0, 1)
+        time.sleep(0.7)
+    return None
